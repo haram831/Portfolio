@@ -4,6 +4,7 @@ export { KnitScrollPattern } from './components/KnitScrollPattern'
 export { KnitStitchUnit } from './components/KnitStitchUnit'
 export { defaultKnitPalette } from './pattern'
 export {
+  extractImageColorGrid,
   getKnitCableCount,
   getKnitCableWidth,
   getKnitRowWidth,
@@ -42,6 +43,7 @@ export type {
   KnitPatternValidationResult,
   KnitRow,
   KnitStitch,
+  ImageColorGridSource,
   StitchKind,
   ValidateKnitPatternOptions,
 } from './pattern'

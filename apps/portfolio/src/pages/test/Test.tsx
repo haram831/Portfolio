@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
+  extractImageColorGrid,
   KnitPattern,
   KnitScrollPattern,
   KnitStitchUnit,
@@ -27,6 +28,9 @@ const testPalette = {
   accentYellow: '#E6BD41',
   accentRust: '#9B301C',
 }
+
+const imagePatternColumns = 14
+const imagePatternRows = 8
 
 const stockinettePattern: KnitPatternData = {
   ...makePattern(
@@ -323,10 +327,55 @@ function getSelectedStitch(details: KnitStitchClickDetails): SelectedStitch {
   }
 }
 
+function makeImageColorworkPattern(colors: string[][]): KnitPatternData {
+  return {
+    castOn: imagePatternColumns,
+    rows: colors.map((row) => ({
+      stitches: row.map((color) => ({ kind: 'knit', color })),
+    })),
+  }
+}
+
 function Test() {
   const [selectedStitch, setSelectedStitch] = useState<SelectedStitch | null>(
     null,
   )
+  const [imageColorGrids, setImageColorGrids] = useState<[
+    string[][],
+    string[][],
+  ] | null>(null)
+  const [imagePatternError, setImagePatternError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    void Promise.all([
+      extractImageColorGrid(
+        '/adreboa.jpg',
+        imagePatternColumns,
+        imagePatternRows,
+      ),
+      extractImageColorGrid(
+        '/laTourette.png',
+        imagePatternColumns,
+        imagePatternRows,
+      ),
+    ])
+      .then((colors) => {
+        if (!cancelled) {
+          setImageColorGrids(colors)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setImagePatternError('Unable to extract the adreboa image colors.')
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <main className={styles.testPage}>
@@ -397,6 +446,58 @@ function Test() {
             pattern={colorworkPattern}
             stitchSize={44}
           />
+        </article>
+
+        <article className={`${styles.sample} ${styles.imagePatternSample}`}>
+          <div className={styles.sampleCopy}>
+            <p className={styles.clickInspectorEyebrow}>extractImageColorGrid</p>
+            <h2>Adreboa colorwork</h2>
+            <p>
+              The source image is divided into {imagePatternColumns} columns and{' '}
+              {imagePatternRows} rows. Each stitch uses its cell&apos;s average color.
+            </p>
+          </div>
+          <div className={styles.imagePatternPreview}>
+            <img alt="Adreboa source" src="/adreboa.jpg" />
+            {imageColorGrids ? (
+              <KnitPattern
+                aria-label="adreboa average-color knit pattern"
+                density="compact"
+                pattern={makeImageColorworkPattern(imageColorGrids[0])}
+                stitchSize={24}
+              />
+            ) : (
+              <p aria-live="polite" className={styles.imagePatternStatus}>
+                {imagePatternError ?? 'Loading adreboa image pattern.'}
+              </p>
+            )}
+          </div>
+        </article>
+
+        <article className={`${styles.sample} ${styles.imagePatternSample}`}>
+          <div className={styles.sampleCopy}>
+            <p className={styles.clickInspectorEyebrow}>extractImageColorGrid</p>
+            <h2>La Tourette colorwork</h2>
+            <p>
+              The source image is divided into {imagePatternColumns} columns and{' '}
+              {imagePatternRows} rows. Each stitch uses its cell&apos;s average color.
+            </p>
+          </div>
+          <div className={styles.imagePatternPreview}>
+            <img alt="La Tourette source" src="/laTourette.png" />
+            {imageColorGrids ? (
+              <KnitPattern
+                aria-label="la tourette average-color knit pattern"
+                density="compact"
+                pattern={makeImageColorworkPattern(imageColorGrids[1])}
+                stitchSize={24}
+              />
+            ) : (
+              <p aria-live="polite" className={styles.imagePatternStatus}>
+                {imagePatternError ?? 'Loading la Tourette image pattern.'}
+              </p>
+            )}
+          </div>
         </article>
 
         <article className={`${styles.sample} ${styles.sampleInteractive}`}>

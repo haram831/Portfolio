@@ -146,6 +146,40 @@
   background: var(--test-primary-100);
 }
 
+.imagePatternSample {
+  grid-column: span 2;
+  justify-content: start;
+  background: rgb(173 204 232 / 0.3);
+}
+
+.imagePatternPreview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+}
+
+.imagePatternPreview img {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  aspect-ratio: 14 / 8;
+  object-fit: cover;
+}
+
+.imagePatternPreview :global(.knit-pattern-view) {
+  justify-self: center;
+  color: var(--text-h);
+}
+
+.imagePatternStatus {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .sampleInteractive {
   display: grid;
   grid-column: 1 / -1;
@@ -357,6 +391,14 @@
 
   .stitchPrinciples,
   .testGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .imagePatternSample {
+    grid-column: auto;
+  }
+
+  .imagePatternPreview {
     grid-template-columns: 1fr;
   }
 
