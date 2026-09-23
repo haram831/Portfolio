@@ -1,12 +1,13 @@
 import type { KnitPatternData, KnitStitch, KnitStitchPositionTarget } from '@knit-ui/core'
 import { homePalette } from './homeFigmaPattern'
 
-// Seven-row lettering. A knit leg or a purl stitch is one horizontal pixel,
+// Seven-row letter bodies, with descenders extending two rows below the baseline.
+// A knit leg or a purl stitch is one horizontal pixel,
 // matching the split-color lettering of the original Design Portfolio fabric.
 const letters: Record<string, readonly string[]> = {
   T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
   r: ['00', '00', '111', '100', '100', '100', '100'],
-  y: ['000', '000', '101', '101', '011', '001', '110'],
+  y: ['000', '000', '101', '101', '101', '101', '011', '001', '001', '110'],
   Y: ['101', '101', '101', '010', '010', '010', '010'],
   o: ['000', '000', '010', '101', '101', '101', '010'],
   u: ['000', '000', '101', '101', '101', '101', '011'],
@@ -29,9 +30,11 @@ for (const word of experienceLettering) {
   let column: number = word.pixel
   for (const character of word.text) {
     const glyph = letters[character]!
+    // Adjust only Try's r; keep the following y at its existing position.
+    const characterColumn = column + (word.text === 'Try' && character === 'r' ? -1 : 0)
     glyph.forEach((line, row) => {
       Array.from(line).forEach((pixel, offset) => {
-        pixels[word.row + row]![column + offset] = pixel === '1'
+        pixels[word.row + row]![characterColumn + offset] = pixel === '1'
       })
     })
     column += glyph[0]!.length + 1
