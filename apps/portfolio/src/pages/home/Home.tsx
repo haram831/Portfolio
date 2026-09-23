@@ -90,7 +90,7 @@ function Home({ onNavigateToTest, onNavigateToExperience }: HomeProps) {
     >
       <KnitScrollPattern
         aria-label="portfolio knitting stage"
-        className="home-knit-scroll"
+        className="portfolio-knit-scroll home-knit-scroll"
         needle={{
           angle: 13.627,
           color: homePalette.white,
@@ -122,7 +122,7 @@ function Home({ onNavigateToTest, onNavigateToExperience }: HomeProps) {
         />
       </KnitScrollPattern>
       <div
-        className="home-scroll-indicator"
+        className="portfolio-instruction home-scroll-indicator"
         ref={scrollIndicatorRef}
       >
         Scroll down

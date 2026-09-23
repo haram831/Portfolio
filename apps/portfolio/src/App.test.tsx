@@ -61,12 +61,12 @@ describe('App', () => {
     })).toBeInTheDocument()
   })
 
-  it('opens an empty experience page when the invitation is clicked', () => {
+  it('opens the pattern experience when the invitation is clicked', () => {
     render(<App />)
     fireEvent.click(getExperienceButton())
 
     expect(window.location.pathname).toBe('/experience')
-    expect(screen.getByRole('main', { name: '패턴 체험 페이지' })).toBeEmptyDOMElement()
+    expect(screen.getByRole('status')).toHaveTextContent('upload your image or text')
     expect(screen.queryByLabelText('portfolio knitting stage')).not.toBeInTheDocument()
     expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, left: 0, behavior: 'instant' })
   })
@@ -75,13 +75,13 @@ describe('App', () => {
     render(<App />)
     fireEvent.keyDown(getExperienceButton(), { key })
     expect(window.location.pathname).toBe('/experience')
-    expect(screen.getByRole('main', { name: '패턴 체험 페이지' })).toBeEmptyDOMElement()
+    expect(screen.getByRole('textbox', { name: '패턴으로 만들 텍스트' })).toBeInTheDocument()
   })
 
   it('supports direct experience URLs and history navigation back to home', () => {
     window.history.replaceState(null, '', '/experience')
     render(<App />)
-    expect(screen.getByRole('main', { name: '패턴 체험 페이지' })).toBeEmptyDOMElement()
+    expect(screen.getByRole('textbox', { name: '패턴으로 만들 텍스트' })).toBeInTheDocument()
 
     window.history.replaceState(null, '', '/')
     fireEvent.popState(window)

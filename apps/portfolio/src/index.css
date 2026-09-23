@@ -1,7 +1,9 @@
 :root {
+  --page-background: #1b1b1b;
+  --portfolio-needle-unit: min(50px, 3.125vw);
   --text: #6b6375;
   --text-h: #08060d;
-  --bg: #fff;
+  --bg: var(--page-background);
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
   --accent: #aa3bff;
@@ -34,7 +36,7 @@
   :root {
     --text: #9ca3af;
     --text-h: #f3f4f6;
-    --bg: #16171d;
+    --bg: var(--page-background);
     --border: #2e303a;
     --code-bg: #1f2028;
     --accent: #c084fc;
@@ -54,7 +56,6 @@
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -63,6 +64,43 @@
 
 body {
   margin: 0;
+}
+
+.portfolio-instruction {
+  padding: 8px 16px;
+  font-size: 20px;
+  font-weight: 400;
+  color: #e7e7e7;
+}
+
+.portfolio-knit-scroll.knit-scroll-pattern {
+  --knit-scroll-background: var(--page-background);
+  --knit-scroll-needle-width: calc(var(--portfolio-needle-unit) * 13.30253);
+
+  max-width: 1440px;
+  margin-inline: auto;
+}
+
+.portfolio-knit-scroll .knit-scroll-pattern__needles {
+  top: calc(var(--portfolio-needle-unit) * 1.08);
+}
+
+.portfolio-knit-scroll .knit-scroll-pattern__needle {
+  top: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.portfolio-knit-scroll .knit-scroll-pattern__needle--left {
+  left: calc(var(--portfolio-needle-unit) * 0.44);
+}
+
+.portfolio-knit-scroll .knit-scroll-pattern__needle--right {
+  right: calc(var(--portfolio-needle-unit) * 0.4);
+}
+
+.portfolio-knit-scroll .knit-scroll-pattern__needle::before {
+  display: none;
 }
 
 h1,

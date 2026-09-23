@@ -1,0 +1,185 @@
+.experience-page {
+  position: relative;
+  min-height: 100svh;
+  width: 100%;
+  overflow-x: clip;
+  background: var(--page-background);
+  color: #fff;
+}
+
+.experience-knit-scroll .knit-scroll-pattern__stage {
+  justify-content: center;
+  padding: calc(var(--portfolio-needle-unit) * 4.4) 24px 54px;
+}
+
+.experience-knit-scroll .knit-scroll-pattern__fabric {
+  padding-top: 0;
+}
+
+.experience-intro {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 100svh;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.experience-instruction {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 32px);
+}
+
+.experience-instruction span span {
+  display: inline-block;
+}
+
+.experience-bounce > span {
+  animation: experience-letter-bounce 1.8s ease-in-out infinite;
+  animation-delay: calc(var(--letter-index) * 65ms);
+}
+
+@keyframes experience-letter-bounce {
+  0%, 40%, 100% { transform: translateY(0); }
+  18% { transform: translateY(-9px); }
+  29% { transform: translateY(2px); }
+}
+
+.experience-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.experience-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.experience-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.experience-button:focus-visible,
+.experience-text-field input:focus-visible {
+  outline: 1px solid #fff;
+  outline-offset: 5px;
+}
+
+.experience-save {
+  position: fixed;
+  left: max(24px, env(safe-area-inset-left));
+  top: max(20px, env(safe-area-inset-top));
+  z-index: 6;
+}
+
+.experience-form {
+  position: absolute;
+  bottom: max(64px, 10svh);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(600px, calc(100% - 48px));
+  pointer-events: auto;
+}
+
+.experience-input-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.experience-text-field {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  border-bottom: 1px solid #fff;
+}
+
+.experience-text-field input {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  padding: 12px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 16px;
+}
+
+.experience-text-field input::placeholder {
+  color: rgb(255 255 255 / 65%);
+}
+
+.experience-input-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  color: rgb(255 255 255 / 65%);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.experience-error {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  width: min(600px, calc(100% - 48px));
+  padding: 8px;
+  background: var(--page-background);
+  color: #fff;
+  font-size: 13px;
+  z-index: 7;
+}
+
+.experience-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 600px) {
+  .experience-save { left: 16px; top: 12px; }
+  .experience-input-row { gap: 12px; }
+  .experience-upload span { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .experience-bounce > span { animation: none; }
+  .experience-page--ready .experience-knit-scroll { padding-top: 100svh; }
+  .experience-knit-scroll .knit-scroll-pattern__needles {
+    position: fixed;
+    max-width: 1440px;
+    margin-inline: auto;
+  }
+}
