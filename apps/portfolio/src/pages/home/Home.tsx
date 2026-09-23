@@ -1,281 +1,24 @@
-import {
-  extractImageColorGrid,
-  KnitPattern,
-  KnitScrollPattern,
-} from '@knit-ui/core'
+import { KnitPattern, KnitScrollPattern } from '@knit-ui/core'
+import type { KnitStitchPositionTarget } from '@knit-ui/core'
 import { useEffect, useRef, useState } from 'react'
-import type {
-  KnitPatternData,
-  KnitStitchPositionTarget,
-  StitchKind,
-} from '@knit-ui/core'
+import type { CSSProperties } from 'react'
+import { homePalette, homePattern } from './homeFigmaPattern'
 import './Home.css'
 
-const homePalette = {
-  background: '#101010',
-  white: '#E7E7E7',
-  grey: '#595959',
-  darkGrey: '#383838',
-}
-
-const homeHighlightPattern = [
-  ',....................,',
-  ',....................,',
-  ',....................,',
-  ',....................,',
-  ',.......#.....#......,',
-  ',......#......#.#....,',
-  ',.....###..#..#.#..#.,',
-  ',......#..#.#.#.#.#.#,',
-  ',......#..#.#.#.#.#.#,',
-  ',......#...#..#.#..#.,',
-  ',....................,',
-  ',............#.......,',
-  ',...........###......,',
-  ',##...#...#..#.......,',
-  ',#.#.#.#.###.#.......,',
-  ',#.#.#.#.#...#.......,',
-  ',##..#.#.#...#.......,',
-  ',#....#..#...#.......,',
-  ',#...................,',
-  ',#...................,',
-  ',....................,',
-  ',....................,',
-  ',.........#..##..#..#,',
-  ',...........#..#.##.#,',
-  ',.........#.#....#.##,',
-  ',.........#.#....#.##,',
-  ',.........#.#.##.#.##,',
-  ',.........#.#..#.#.##,',
-  ',.........#.###..#..#,',
-  ',....................,',
-  ',##..###..##.........,',
-  ',#.#.#...#...........,',
-  ',#.#.#...#...........,',
-  ',#.#.###.##..........,',
-  ',#.#.#.....#.........,',
-  ',#.#.#.....#.........,',
-  ',##..###.###.........,',
-  ',....................,',
-  ',....................,',
-] as const
-
-const posterHighlightPattern = [
-  ',##..#..##.###.##.##.,',
-  ',#.##.#.#...#..#..#.#,',
-  ',##.#.#..#..#..##.##.,',
-  ',#..#.#..#..#..#..#.#,',
-  ',#...#..##..#..##.#.#,',
-  ',....................,',
-] as const
-
-const homePatternRows = [...homeHighlightPattern, ...posterHighlightPattern]
-
-const homeColumnSpecs = Array.from({ length: 22 }, (_, columnIndex) => ({
-  kind: columnIndex % 2 === 0 ? 'knit' : 'purl',
-  span: 1,
-})) satisfies { kind: StitchKind; span: number }[]
-
-const HOME_PATTERN_COLUMN_COUNT = homeColumnSpecs.reduce(
-  (columnCount, column) => columnCount + column.span,
-  0,
-)
-const HOME_TEST_LINK_VISUAL_COLUMN = 1
-const HOME_TEST_LINK_ROW_START = 6
-const HOME_TEST_LINK_ROW_END = 12
-const HOME_STITCH_SIZE = 'clamp(34px, 3.47vw, 50px)'
-const HOME_STITCH_OVERLAP = 0
-const HOME_PATTERN_GAP = 0
-const HOME_PATTERN_ROW_GAP = 0
-const HOME_NEEDLE_ANGLE = 15
-const HOME_NEEDLE_SPEED = 1
-const HOME_NEEDLE_THICKNESS = 18
-const HOME_PATTERN_ARIA_LABEL =
-  'Figma matched grey and white knit purl portfolio pattern with POSTER lettering'
-const HOME_SCROLL_ARIA_LABEL = 'portfolio knitting stage'
-const HOME_STITCH_DENSITY = 'compact'
-const HOME_MISTAKE_FREQUENCY = 0.01
-const HOME_SCROLL_INDICATOR_FADE_VIEWPORT_RATIO = 0.5
-const HOME_PROJECT_PATTERN_GAP_ROWS = 2
-
-interface HomeProjectPatternDefinition {
-  columns: number
-  rows: number
-  source: string
-  startColumn: number
-}
-
-interface HomeProjectColorGrid {
-  colors: string[][]
-  project: HomeProjectPatternDefinition
-}
-
-const homeProjectPatterns: HomeProjectPatternDefinition[] = [
-  {
-    columns: 12,
-    rows: 9,
-    source: '/laTourette.png',
-    startColumn: 2,
-  },
-  {
-    columns: 7,
-    rows: 12,
-    source: '/hardCopyDeepCopy.jpg',
-    startColumn: 13,
-  },
-  {
-    columns: 9,
-    rows: 9,
-    source: '/getYourRing.jpg',
-    startColumn: 2,
-  },
-  {
-    columns: 10,
-    rows: 10,
-    source: '/hangsha.png',
-    startColumn: 11,
-  },
-  {
-    columns: 14,
-    rows: 7,
-    source: '/adreboa.jpg',
-    startColumn: 5,
-  },
-]
-
-const homeNeedleOptions = {
-  angle: HOME_NEEDLE_ANGLE,
-  color: homePalette.grey,
-  highlightColor: homePalette.white,
-  speed: HOME_NEEDLE_SPEED,
-  thickness: HOME_NEEDLE_THICKNESS,
-  visible: true,
-}
-
-const homePattern: KnitPatternData = {
-  castOn: HOME_PATTERN_COLUMN_COUNT,
-  palette: {
-    colors: [homePalette.darkGrey, homePalette.grey, homePalette.white],
-  },
-  rows: homePatternRows.map((_, rowIndex) => ({
-    stitches: makeHomePatternRow(rowIndex),
-  })),
-}
-
-const homeTestLinkPositions = getVisualColumnInteractivePositions(
-  HOME_TEST_LINK_VISUAL_COLUMN,
-  HOME_TEST_LINK_ROW_START,
-  HOME_TEST_LINK_ROW_END,
+const homeTestLinkPositions: KnitStitchPositionTarget[] = Array.from(
+  { length: 7 },
+  (_, index) => ({ columnIndex: 1, rowIndex: index + 6 }),
 )
 
 interface HomeProps {
   onNavigateToTest?: () => void
 }
 
-function makeHomePatternRow(rowIndex: number) {
-  const highlightRow = homePatternRows[rowIndex] ?? ''
-
-  return homeColumnSpecs.map(({ kind, span }, visualColumnIndex) => ({
-    color: getUnitColor(highlightRow[visualColumnIndex]),
-    kind,
-    span,
-  }))
-}
-
-function getUnitColor(unit: string) {
-  switch (unit) {
-    case '#':
-      return homePalette.white
-    case '.':
-      return homePalette.darkGrey
-    case ',':
-      return homePalette.grey
-    default:
-      return undefined
-  }
-}
-
-function getVisualColumnInteractivePositions(
-  visualColumnIndex: number,
-  startRow: number,
-  endRow: number,
-): KnitStitchPositionTarget[] {
-  const columnIndex = getVisualColumnStartIndex(visualColumnIndex)
-
-  return Array.from({ length: endRow - startRow + 1 }, (_, rowOffset) => ({
-    columnIndex,
-    rowIndex: startRow + rowOffset,
-  }))
-}
-
-function getVisualColumnStartIndex(visualColumnIndex: number): number {
-  return homeColumnSpecs
-    .slice(0, visualColumnIndex)
-    .reduce(
-      (columnIndex, columnSpec) => columnIndex + columnSpec.span,
-      0,
-    )
-}
-
-function appendProjectColorGrids(
-  pattern: KnitPatternData,
-  projectColorGrids: HomeProjectColorGrid[],
-): KnitPatternData {
-  if (projectColorGrids.length === 0) {
-    return pattern
-  }
-
-  return {
-    ...pattern,
-    rows: [
-      ...projectColorGrids.flatMap(({ colors, project }, projectIndex) => [
-        ...colors.map((row) => makeProjectPatternRow(row, project.startColumn)),
-        ...(projectIndex < projectColorGrids.length - 1
-          ? Array.from(
-              { length: HOME_PROJECT_PATTERN_GAP_ROWS },
-              makeHomeExtensionRow,
-            )
-          : []),
-      ]),
-      ...pattern.rows,
-    ],
-  }
-}
-
-function makeProjectPatternRow(colors: string[], startColumn: number) {
-  return {
-    stitches: homeColumnSpecs.map(({ kind, span }, columnIndex) => ({
-      color:
-        colors[columnIndex - startColumn] ?? getHomeExtensionColor(columnIndex),
-      kind,
-      span,
-    })),
-  }
-}
-
-function makeHomeExtensionRow() {
-  return {
-    stitches: homeColumnSpecs.map(({ kind, span }, columnIndex) => ({
-      color: getHomeExtensionColor(columnIndex),
-      kind,
-      span,
-    })),
-  }
-}
-
-function getHomeExtensionColor(columnIndex: number): string {
-  return columnIndex === 0 || columnIndex === HOME_PATTERN_COLUMN_COUNT - 1
-    ? homePalette.grey
-    : homePalette.darkGrey
-}
-
 function Home({ onNavigateToTest }: HomeProps) {
   const enableTestNavigation = Boolean(onNavigateToTest)
   const scrollIndicatorRef = useRef<HTMLDivElement>(null)
   const [scrollIndicatorOpacity, setScrollIndicatorOpacity] = useState(1)
-  const [projectColorGrids, setProjectColorGrids] = useState<
-    HomeProjectColorGrid[]
-  >([])
+  const [stitchSize, setStitchSize] = useState(getHomeStitchSize)
 
   useEffect(() => {
     let frame = 0
@@ -288,14 +31,12 @@ function Home({ onNavigateToTest }: HomeProps) {
         return
       }
 
-      const fadeDistance = Math.max(
-        1,
-        window.innerHeight * HOME_SCROLL_INDICATOR_FADE_VIEWPORT_RATIO,
-      )
+      const fadeDistance = Math.max(1, window.innerHeight * 0.5)
       const scrollIndicatorRect = scrollIndicator.getBoundingClientRect()
       const progress = clampNumber(scrollIndicatorRect.top / fadeDistance, 0, 1)
 
-      setScrollIndicatorOpacity(progress**2)
+      setScrollIndicatorOpacity(progress ** 2)
+      setStitchSize(getHomeStitchSize())
     }
 
     const requestScrollIndicatorUpdate = () => {
@@ -317,67 +58,36 @@ function Home({ onNavigateToTest }: HomeProps) {
     }
   }, [])
 
-  useEffect(() => {
-    let cancelled = false
-
-    void Promise.allSettled(
-      homeProjectPatterns.map(async (project) => ({
-        colors: await extractImageColorGrid(
-          project.source,
-          project.columns,
-          project.rows,
-        ),
-        project,
-      })),
-    ).then((results) => {
-      if (cancelled) {
-        return
-      }
-
-      const loadedProjectColorGrids: HomeProjectColorGrid[] = results.flatMap(
-        (result) =>
-          result.status === 'fulfilled' ? [result.value] : [],
-      )
-      setProjectColorGrids(loadedProjectColorGrids)
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  function handleHomeStitchClick() {
-    onNavigateToTest?.()
-  }
-
-  const renderedHomePattern = appendProjectColorGrids(
-    homePattern,
-    projectColorGrids,
-  )
-
   return (
-    <main className="home-page">
+    <main
+      className="home-page"
+      style={{ '--home-stitch-size': `${stitchSize}px` } as CSSProperties}
+    >
       <KnitScrollPattern
-        aria-label={HOME_SCROLL_ARIA_LABEL}
+        aria-label="portfolio knitting stage"
         className="home-knit-scroll"
-        needle={homeNeedleOptions}
+        needle={{
+          angle: 13.627,
+          color: homePalette.white,
+          highlightColor: homePalette.white,
+          speed: 1,
+          thickness: stitchSize * 0.48,
+          visible: true,
+        }}
       >
         <KnitPattern
-          aria-label={HOME_PATTERN_ARIA_LABEL}
-          density={HOME_STITCH_DENSITY}
-          mistakeFrequency={HOME_MISTAKE_FREQUENCY}
-          gap={HOME_PATTERN_GAP}
+          aria-label="Figma matched grey and white knit purl portfolio pattern"
+          density="compact"
+          gap={0}
           interactiveStitchPositions={
             enableTestNavigation ? homeTestLinkPositions : undefined
           }
-          onStitchClick={
-            enableTestNavigation ? handleHomeStitchClick : undefined
-          }
-          pattern={renderedHomePattern}
+          onStitchClick={enableTestNavigation ? onNavigateToTest : undefined}
+          pattern={homePattern}
           rowAlign="start"
-          rowGap={HOME_PATTERN_ROW_GAP}
-          stitchOverlap={HOME_STITCH_OVERLAP}
-          stitchSize={HOME_STITCH_SIZE}
+          rowGap={0}
+          stitchOverlap={0}
+          stitchSize={stitchSize}
         />
       </KnitScrollPattern>
       <div
@@ -389,6 +99,11 @@ function Home({ onNavigateToTest }: HomeProps) {
       </div>
     </main>
   )
+}
+
+function getHomeStitchSize(): number {
+  // The Figma canvas is 1440px wide, with a 50px row pitch.
+  return typeof window === 'undefined' ? 50 : Math.min(50, window.innerWidth / 28.8)
 }
 
 function clampNumber(value: number, min: number, max: number): number {

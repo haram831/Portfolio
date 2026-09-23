@@ -1,6 +1,6 @@
 .home-page {
-  --home-canvas: #101010;
-  --home-highlight: #E7E7E7;
+  --home-canvas: #1b1b1b;
+  --home-highlight: #e7e7e7;
 
   width: 100%;
   min-height: 100svh;
@@ -13,30 +13,88 @@
 
 .home-knit-scroll {
   --knit-scroll-background: var(--home-canvas);
+  --knit-scroll-needle-width: calc(var(--home-stitch-size) * 13.30253);
+
+  max-width: 1440px;
+  margin-inline: auto;
   background: var(--home-canvas);
 }
 
 .home-knit-scroll .knit-scroll-pattern__stage {
   align-items: flex-start;
   justify-content: center;
-  padding: 80px 28px 96px;
+  padding: calc(var(--home-stitch-size) * 4.4) 0
+    calc(var(--home-stitch-size) * 1.08);
 }
 
 .home-knit-scroll .knit-scroll-pattern__fabric {
   align-items: center;
+  padding-top: 0;
 }
 
-.home-knit-scroll .knit-pattern-view {
-  color: var(--home-stitch);
+.home-knit-scroll .knit-pattern-view__fabric {
+  /* Figma: nine 95px knit columns alternating with eight 50px purl columns. */
+  grid-template-columns: repeat(
+      8,
+      calc(var(--home-stitch-size) * 1.9) var(--home-stitch-size)
+    ) calc(var(--home-stitch-size) * 1.9);
 }
 
 .home-knit-scroll .knit-stitch-unit {
-  --knit-stitch-stroke-width: 40px;
+  justify-self: start;
+  align-self: start;
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
+}
+
+/* Exact Figma exports supply the outlines; the library still supplies color,
+   keyboard interaction, and scroll reveal for each individual stitch. */
+.home-knit-scroll .knit-stitch-unit > path {
+  display: none;
+}
+
+.home-knit-scroll .knit-stitch-unit--knit {
+  width: calc(var(--home-stitch-size) * 2);
+  height: calc(var(--home-stitch-size) * 1.32);
+  margin-left: calc(var(--home-stitch-size) * -0.0635228);
+  margin-top: calc(var(--home-stitch-size) * -0.235134);
+  mask-image: url('../../assets/figma/home-knit.svg');
+  background: linear-gradient(
+    to right,
+    var(--knit-stitch-left-color, currentColor) 51%,
+    var(--knit-stitch-right-color, currentColor) 51%
+  );
+}
+
+.home-knit-scroll .knit-stitch-unit--purl {
+  width: calc(var(--home-stitch-size) * 1.22);
+  height: calc(var(--home-stitch-size) * 0.72);
+  margin-left: calc(var(--home-stitch-size) * -0.1136758);
+  margin-top: calc(var(--home-stitch-size) * 0.065658);
+  mask-image: url('../../assets/figma/home-purl.svg');
+  background: currentColor;
+}
+
+.home-knit-scroll .knit-stitch-unit--interactive:focus-visible {
+  filter: brightness(1.5);
+}
+
+.home-knit-scroll .knit-scroll-pattern__needles {
+  top: calc(var(--home-stitch-size) * 1.08);
 }
 
 .home-knit-scroll .knit-scroll-pattern__needle {
-  border-radius: 1px;
+  top: 0;
+  border-radius: 0;
   box-shadow: none;
+}
+
+.home-knit-scroll .knit-scroll-pattern__needle--left {
+  left: calc(var(--home-stitch-size) * 0.44);
+}
+
+.home-knit-scroll .knit-scroll-pattern__needle--right {
+  right: calc(var(--home-stitch-size) * 0.4);
 }
 
 .home-knit-scroll .knit-scroll-pattern__needle::before {
@@ -54,11 +112,4 @@
   pointer-events: none;
   will-change: opacity;
   z-index: 5;
-}
-
-@media (max-width: 760px) {
-  .home-knit-scroll .knit-scroll-pattern__stage {
-    padding: 68px 12px 80px;
-  }
-
 }
