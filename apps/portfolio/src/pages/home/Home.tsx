@@ -1,12 +1,19 @@
-import { KnitPattern, KnitScrollPattern } from '@knit-ui/core'
+import { KnitPattern, KnitPatternGroup, KnitScrollPattern } from '@knit-ui/core'
 import type { KnitStitchPositionTarget } from '@knit-ui/core'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { homePalette } from './homeFigmaPattern'
 import { connectHomeProjectPattern } from './homeContinuousPattern'
 import { experienceLinkPositions, homeExperiencePattern } from './homeExperiencePattern'
-import { createProjectPattern, loadProjectColorGrids } from './ProjectPattern'
+import { createProjectPattern, projectPlacements } from './ProjectPattern'
+import { getProjectTitleRevealCount, projectTitles } from './homeProjectTitles'
 import './Home.css'
+
+const projectPattern = createProjectPattern()
+const pattern = connectHomeProjectPattern(projectPattern)
+const projectTitleRevealCounts = projectPlacements.map((project) =>
+  getProjectTitleRevealCount(project, pattern.rows.length, homeExperiencePattern.rows.length, pattern.castOn),
+)
 
 interface HomeProps {
   onNavigateToTest?: () => void
@@ -16,8 +23,13 @@ interface HomeProps {
 function Home({ onNavigateToTest, onNavigateToExperience }: HomeProps) {
   const scrollIndicatorRef = useRef<HTMLDivElement>(null)
   const [stitchSize, setStitchSize] = useState(getHomeStitchSize)
-  const [projectPattern, setProjectPattern] = useState(createProjectPattern)
-  const pattern = useMemo(() => connectHomeProjectPattern(projectPattern), [projectPattern])
+  const [revealedProjectMask, setRevealedProjectMask] = useState(0)
+  const updateProjectTitles = useCallback((visibleStitchCount: number) => {
+    // Update React only when a project crosses its completion threshold.
+    setRevealedProjectMask(projectTitleRevealCounts.reduce((mask, count, index) =>
+      visibleStitchCount >= count ? mask | (1 << index) : mask, 0,
+    ))
+  }, [])
   const homeTestLinkPositions: KnitStitchPositionTarget[] = Array.from(
     { length: 7 },
     (_, index) => ({
@@ -29,16 +41,6 @@ function Home({ onNavigateToTest, onNavigateToExperience }: HomeProps) {
     ...(onNavigateToTest ? homeTestLinkPositions : []),
     ...(onNavigateToExperience ? experienceLinkPositions : []),
   ]
-
-  useEffect(() => {
-    let active = true
-
-    void loadProjectColorGrids().then((colors) => {
-      if (active) setProjectPattern(createProjectPattern(colors))
-    })
-
-    return () => { active = false }
-  }, [])
 
   useEffect(() => {
     let frame = 0
@@ -91,6 +93,7 @@ function Home({ onNavigateToTest, onNavigateToExperience }: HomeProps) {
       <KnitScrollPattern
         aria-label="portfolio knitting stage"
         className="portfolio-knit-scroll home-knit-scroll"
+        onRevealChange={updateProjectTitles}
         needle={{
           angle: 13.627,
           color: homePalette.white,
@@ -100,26 +103,50 @@ function Home({ onNavigateToTest, onNavigateToExperience }: HomeProps) {
           visible: true,
         }}
       >
-        <KnitPattern
-          aria-label="Continuous design portfolio and project knit pattern"
-          aria-description="Try Your Pattern: 흰색 글자 코를 클릭하면 패턴 체험 페이지로 이동합니다."
-          density="compact"
-          gap={0}
-          interactiveStitchPositions={interactivePositions}
-          onStitchClick={({ rowIndex }) => {
-            if (rowIndex < homeExperiencePattern.rows.length) {
-              onNavigateToExperience?.()
-            } else {
-              onNavigateToTest?.()
-            }
-          }}
-          pattern={pattern}
-          rowAlign="start"
-          rowGap={0}
-          stitchOverlap={0}
-          stitchSize={stitchSize}
-          mistakeFrequency={0.01}
-        />
+        <KnitPatternGroup className="home-project-fabric" gap={0}>
+          <KnitPattern
+            aria-label="Continuous design portfolio and project knit pattern"
+            aria-description="Try Your Pattern: 흰색 글자 코를 클릭하면 패턴 체험 페이지로 이동합니다."
+            density="compact"
+            gap={0}
+            interactiveStitchPositions={interactivePositions}
+            onStitchClick={({ rowIndex }) => {
+              if (rowIndex < homeExperiencePattern.rows.length) {
+                onNavigateToExperience?.()
+              } else {
+                onNavigateToTest?.()
+              }
+            }}
+            pattern={pattern}
+            rowAlign="start"
+            rowGap={0}
+            stitchOverlap={0}
+            stitchSize={stitchSize}
+            mistakeFrequency={0.01}
+          />
+          <ul className="home-project-titles" aria-label="프로젝트">
+            {projectPlacements.map((project, index) => {
+              const title = projectTitles[project.id]!
+              const revealed = (revealedProjectMask & (1 << index)) !== 0
+
+              return (
+                <li
+                  key={project.id}
+                  className="home-project-title"
+                  data-project={project.id}
+                  data-revealed={revealed}
+                  aria-hidden={!revealed}
+                  style={{
+                    '--project-title-left': title.left,
+                    '--project-title-top': homeExperiencePattern.rows.length + title.top,
+                  } as CSSProperties}
+                >
+                  {title.text}
+                </li>
+              )
+            })}
+          </ul>
+        </KnitPatternGroup>
       </KnitScrollPattern>
       <div
         className="portfolio-instruction home-scroll-indicator"

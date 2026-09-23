@@ -103,6 +103,22 @@ function renderNeedleMotion(maxSpeed?: number) {
 }
 
 describe('KnitScrollPattern fabric motion', () => {
+  it('reports revealed stitch counts in both scroll directions without duplicate updates', async () => {
+    const onRevealChange = vi.fn()
+    render(
+      <KnitScrollPattern aria-label="reveal events" fabricSpeed={1} onRevealChange={onRevealChange}>
+        <KnitPattern pattern={scrollPattern} stitchSize={50} stitchOverlap={0} gap={0} />
+      </KnitScrollPattern>,
+    )
+    const root = screen.getByLabelText('reveal events')
+    for (const scrollTop of [0, 25, 50, 100, 100, 25, 0]) {
+      setScrollMetrics(root, { scrollableHeight: 2000, scrollTop })
+      fireEvent.scroll(window)
+      await nextAnimationFrame()
+    }
+    expect(onRevealChange.mock.calls.map(([count]) => count)).toEqual([0, 1, 2, 4, 1, 0])
+  })
+
   it('preserves bottom-up group order and the space between patterns', async () => {
     render(
       <KnitScrollPattern aria-label="scroll pattern" fabricSpeed={1}>

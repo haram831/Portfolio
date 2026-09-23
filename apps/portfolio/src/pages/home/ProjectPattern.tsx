@@ -1,4 +1,3 @@
-import { extractImageColorGrid } from '@knit-ui/core'
 import type { KnitPatternData } from '@knit-ui/core'
 import { homePalette } from './homeFigmaPattern'
 
@@ -13,71 +12,6 @@ export const laTouretteColorPalette = {
   brown3: '#725E53',
   brown4: '#110F10',
 }
-
-const C = laTouretteColorPalette
-
-export const laTourettePattern = [
-  [
-    C.green4, C.green1, C.green4,
-    C.green2, C.green4, C.green4,
-    C.green2, C.green2, C.green4,
-  ],
-  [
-    C.green3, C.green2, C.green1,
-    C.green3, C.green3, C.green4,
-    C.green4, C.green4, C.green3,
-  ],
-  [
-    C.green4, C.green4, C.blue,
-    C.blue, C.blue, C.blue,
-    C.blue, C.green2, C.green2,
-  ],
-  [
-    C.green2, C.green2, C.blue,
-    C.brown2, C.brown3, C.brown3,
-    C.blue, C.green2, C.green4,
-  ],
-  [
-    C.green2, C.green4, C.blue,
-    C.brown3, C.brown2, C.brown3,
-    C.blue, C.green1, C.green2,
-  ],
-  [
-    C.green4, C.green1, C.blue,
-    C.brown2, C.brown2, C.brown2,
-    C.blue, C.green4, C.green3,
-  ],
-  [
-    C.green3, C.green1, C.blue,
-    C.brown3, C.brown2, C.brown2,
-    C.blue, C.green1, C.green4,
-  ],
-  [
-    C.green4, C.green4, C.blue,
-    C.brown4, C.brown3, C.brown2,
-    C.blue, C.green2, C.green3,
-  ],
-  [
-    C.green3, C.green2, C.blue,
-    C.brown4, C.brown2, C.brown3,
-    C.blue, C.green1, C.green4,
-  ],
-  [
-    C.green2, C.green4, C.blue,
-    C.blue, C.blue, C.blue,
-    C.blue, C.green1, C.green2,
-  ],
-  [
-    C.green4, C.green4, C.green1,
-    C.green2, C.green4, C.green4,
-    C.green2, C.green2, C.green1,
-  ],
-  [
-    C.green4, C.green1, C.green3,
-    C.green3, C.green2, C.green1,
-    C.green3, C.green3, C.green1,
-  ],
-] as const
 
 export const hourglassColorPalette = {
   black: '#000000',
@@ -111,15 +45,105 @@ export const fullFalseColorPalette = {
 }
 
 export const adreboaColorPalette = {
-red: '#FF0306',
-orange: '#FD8103',
-darkGreen: '#0B4D01',
-green: '#6DC80A',
-yellowGreen: '#D9E82B',
-blue: '#92CABD',
-lightGreen: '#B7F1AB',
-white: '#FDFDFF',
+  red: '#FF0306',
+  orange: '#FD8103',
+  darkGreen: '#0B4D01',
+  green: '#6DC80A',
+  yellowGreen: '#D9E82B',
+  blue: '#92CABD',
+  lightGreen: '#B7F1AB',
+  white: '#FDFDFF',
+  pureWhite: '#FFFFFF',
 }
+
+export const softCopyDeepCopyColorPalette = {
+  white: '#FFFFFF',
+  black: '#000000',
+}
+
+const C = laTouretteColorPalette
+const H = hangshaColorPalette
+const A = adreboaColorPalette
+const F = fullFalseColorPalette
+const S = softCopyDeepCopyColorPalette
+const U = hourglassColorPalette
+
+// 하지 못한 말 — Figma 92:7176, columns 2–6 and rows 26–32 (zero-based).
+export const hourglassPattern = [
+  [[U.black, U.darkGrey], U.grey, U.lightGrey, U.grey, [U.darkGrey, U.black]],
+  [U.black, U.grey, U.lightGrey, U.grey, U.black],
+  [U.black, U.darkGrey, U.grey, U.darkGrey, U.black],
+  [U.black, U.darkGrey, U.grey, U.darkGrey, U.black],
+  [U.black, U.darkGrey, U.grey, U.darkGrey, U.black],
+  [U.black, U.grey, U.lightGrey, U.grey, U.black],
+  [[U.black, U.darkGrey], U.grey, U.lightGrey, U.grey, [U.darkGrey, U.black]],
+] as const
+
+// Figma 92:7176, read row-by-row. Pairs preserve different left/right knit legs.
+export const laTourettePattern = [
+  [C.green3, C.green1, C.green4, C.green4, C.green1, C.green2, C.green3, C.green4, C.green3, C.green4, C.green1, C.green2, C.green2, C.green2, C.green2],
+  [C.green4, C.green2, C.green1, C.green1, C.green2, C.green3, C.green4, C.green3, C.green3, C.green4, C.green1, C.green4, C.green1, C.green4, C.green4],
+  [C.green3, C.green4, C.green2, C.blue, C.blue, C.blue, C.blue, C.blue, C.blue, C.blue, C.blue, C.blue, C.green3, C.green2, C.green3],
+  [C.green4, C.green2, C.blue, C.blue, C.brown2, C.brown2, C.brown2, C.brown3, C.brown2, C.brown3, C.brown3, C.blue, C.green2, C.green2, C.green2],
+  [C.green2, C.green4, C.blue, C.blue, C.brown2, C.brown3, [C.brown2, C.brown3], C.brown2, [C.brown2, C.brown3], C.brown3, C.brown2, C.blue, C.green3, C.green1, C.green4],
+  [C.green2, C.green1, C.blue, C.blue, C.brown2, C.brown2, C.brown2, C.brown2, C.brown2, C.brown2, C.brown2, C.blue, C.green1, C.green4, C.green2],
+  [C.green4, C.green1, C.blue, C.blue, C.brown3, C.brown3, [C.brown3, C.brown2], C.brown2, [C.brown3, C.brown2], C.brown2, C.brown3, C.blue, C.green3, C.green1, C.green3],
+  [C.green3, C.green4, C.green2, C.blue, C.brown2, C.brown4, C.brown4, C.brown3, C.brown2, C.brown2, C.brown3, C.blue, C.green3, C.green2, C.green4],
+  [C.green4, C.green2, C.green1, C.blue, C.brown4, C.brown4, C.brown4, C.brown2, C.brown3, C.brown3, C.brown2, C.blue, C.green2, C.green1, C.green3],
+  [C.green3, C.green4, C.green2, C.blue, C.blue, C.blue, C.blue, C.blue, C.blue, C.blue, C.blue, C.blue, C.green1, C.green1, C.green4],
+  [C.green2, C.green4, C.green1, C.green1, C.green1, C.green2, C.green3, C.green4, C.green4, C.green4, C.green1, C.green2, C.green3, C.green2, C.green2],
+  [C.green4, C.green1, C.green4, C.green3, C.green2, C.green3, C.green4, C.green2, C.green3, C.green1, C.green2, C.green3, C.green4, C.green3, C.green1],
+] as const
+
+export const hangshaPattern = [
+  [H.red, H.blue, H.red, H.blue, H.red],
+  [H.red, H.blue, H.red, H.blue, H.red],
+  [H.red, H.red, H.red, H.red, H.red],
+  [H.lightBlue, H.lightBlue, H.lightBlue, H.lightBlue, H.lightBlue],
+  [H.lightBlue, H.lightBlue, H.navy, H.lightBlue, H.lightBlue],
+  [H.lightBlue, H.navy, H.lightBlue, H.navy, H.lightBlue],
+  [H.lightBlue, H.lightBlue, H.navy, H.lightBlue, H.lightBlue],
+  [H.lightBlue, H.lightBlue, H.lightBlue, H.lightBlue, H.lightBlue],
+] as const
+
+export const adreboaPattern = [
+  [A.blue, A.yellowGreen, A.blue, A.lightGreen, A.darkGreen],
+  [A.darkGreen, A.green, A.green, A.blue, A.green],
+  [[A.green, A.red], A.lightGreen, A.darkGreen, A.red, A.lightGreen],
+  [A.yellowGreen, A.orange, A.lightGreen, A.green, A.darkGreen],
+  [A.blue, A.yellowGreen, A.blue, A.green, A.blue],
+  [A.pureWhite, A.blue, A.lightGreen, A.blue, A.yellowGreen],
+  [A.pureWhite, A.green, A.green, A.darkGreen, A.white],
+  [A.blue, A.yellowGreen, A.darkGreen, A.lightGreen, A.red],
+  [A.green, A.lightGreen, A.lightGreen, A.blue, A.darkGreen],
+  [A.yellowGreen, A.blue, A.yellowGreen, A.darkGreen, A.green],
+  [A.green, A.yellowGreen, A.green, A.lightGreen, A.blue],
+  [A.darkGreen, A.red, A.orange, A.green, A.green],
+  [A.yellowGreen, A.lightGreen, A.lightGreen, A.blue, A.white],
+  [A.pureWhite, A.green, A.yellowGreen, A.lightGreen, A.green],
+] as const
+
+export const softCopyDeepCopyPattern = [
+  [S.white, S.white, S.black, S.black],
+  [S.white, S.white, S.black, S.black],
+  [S.black, S.black, S.white, S.white],
+  [S.black, S.black, S.white, S.white],
+  [S.white, S.white, S.black, S.black],
+  [S.white, S.white, S.black, S.black],
+  [S.black, S.black, S.white, S.white],
+  [S.black, S.black, S.white, S.white],
+] as const
+
+// Figma 94:2477: colors across the visible cable, from left to right.
+export const fullFalsePattern = [
+  [F.Brown, F.red, F.white, F.skyBlue],
+  [F.red, F.red, F.skyBlue, F.blue],
+  [F.white, F.darkRed, F.black, F.ocher],
+  [F.blue, F.grey, F.blackBrown, F.grey],
+  [F.skyBlue, F.black, F.white, F.darkRed],
+  [F.grey, F.skyBlue, F.darkRed, F.red],
+  [F.ocher, F.blue, F.red, F.Brown],
+] as const
 
 export interface ProjectPlacement {
   id: string
@@ -127,25 +151,32 @@ export interface ProjectPlacement {
   startRow: number
   columns: number
   rows: number
-  source?: string
 }
 
-// Figma 92:7176: zero-based positions in a 19-column, 52-row fabric.
-// Only geometry is taken from Figma, not its colors or text labels.
+// Keep the existing 19-column, 52-row layout and full & false's one-stitch shift.
 export const projectPlacements: ProjectPlacement[] = [
-  // Figma starts at column 2; move full & false one stitch to the right.
-  { id: 'full-false', startColumn: 3, startRow: 2, columns: 4, rows: 7, source: '/trueFalse.jpg' },
-  { id: 'soft-copy-deep-copy', startColumn: 12, startRow: 6, columns: 4, rows: 8, source: '/hardCopyDeepCopy.jpg' },
-  { id: 'hangsha', startColumn: 2, startRow: 13, columns: 5, rows: 8, source: '/hangsha.png' },
-  { id: 'hourglass', startColumn: 2, startRow: 26, columns: 5, rows: 7, source: '/getYourRing.jpg' },
-  { id: 'adreboa', startColumn: 12, startRow: 18, columns: 5, rows: 14, source: '/adreboa.jpg' },
+  { id: 'full-false', startColumn: 3, startRow: 2, columns: 4, rows: 7 },
+  { id: 'soft-copy-deep-copy', startColumn: 12, startRow: 6, columns: 4, rows: 8 },
+  { id: 'hangsha', startColumn: 2, startRow: 13, columns: 5, rows: 8 },
+  { id: 'hourglass', startColumn: 2, startRow: 26, columns: 5, rows: 7 },
+  { id: 'adreboa', startColumn: 12, startRow: 18, columns: 5, rows: 14 },
   { id: 'la-tourette', startColumn: 2, startRow: 38, columns: 15, rows: 12 },
 ]
 
-export type ProjectColorGrids = Record<string, readonly (readonly string[])[]>
+type ProjectStitchColor = string | readonly [left: string, right: string]
+export type ProjectColorGrids = Record<string, readonly (readonly ProjectStitchColor[])[]>
+
+export const figmaProjectColorGrids: ProjectColorGrids = {
+  'full-false': fullFalsePattern,
+  'soft-copy-deep-copy': softCopyDeepCopyPattern,
+  hangsha: hangshaPattern,
+  hourglass: hourglassPattern,
+  adreboa: adreboaPattern,
+  'la-tourette': laTourettePattern,
+}
 
 export function createProjectPattern(colors: ProjectColorGrids = {}): KnitPatternData {
-  const colorGrids: ProjectColorGrids = { 'la-tourette': laTourettePattern, ...colors }
+  const colorGrids = { ...figmaProjectColorGrids, ...colors }
   const fullFalse = projectPlacements[0]!
 
   return {
@@ -156,18 +187,15 @@ export function createProjectPattern(colors: ProjectColorGrids = {}): KnitPatter
           rowIndex >= placement.startRow && rowIndex < placement.startRow + placement.rows &&
           columnIndex >= placement.startColumn && columnIndex < placement.startColumn + placement.columns,
         )
-        const grid = project ? colorGrids[project.id] : undefined
-        // Keep the saved La Tourette colors, resampling its nine columns to fifteen.
-        const sourceRow = project && grid?.length
-          ? grid[Math.floor((rowIndex - project.startRow) * grid.length / project.rows)]
+        const cell = project
+          ? colorGrids[project.id]?.[rowIndex - project.startRow]?.[columnIndex - project.startColumn]
           : undefined
-        const color = project && sourceRow?.length
-          ? sourceRow[Math.floor((columnIndex - project.startColumn) * sourceRow.length / project.columns)]
-          : undefined
+        const color = typeof cell === 'string' ? cell : cell?.[0]
 
         return {
           kind: columnIndex % 2 === 0 ? 'knit' as const : 'purl' as const,
           color: color ?? (columnIndex === 0 || columnIndex === 18 ? homePalette.grey : homePalette.darkGrey),
+          ...(cell && typeof cell !== 'string' ? { leftColor: cell[0], rightColor: cell[1] } : {}),
         }
       }),
     })),
@@ -179,30 +207,9 @@ export function createProjectPattern(colors: ProjectColorGrids = {}): KnitPatter
       rightStartStitch: fullFalse.startColumn + 2,
       rightEndStitch: fullFalse.startColumn + 3,
       cross: 'left-over-right',
-      // Sample the project image across the visible crossing.
-      color: colors[fullFalse.id]?.map((row) => [...row]),
+      color: colorGrids[fullFalse.id]?.map((row) =>
+        row.map((cell) => typeof cell === 'string' ? cell : cell[0]),
+      ),
     }],
   }
-}
-
-let projectColorGridsPromise: Promise<ProjectColorGrids> | undefined
-
-export function loadProjectColorGrids(): Promise<ProjectColorGrids> {
-  // Reuse image sampling across StrictMode effects and returns to the home page.
-  projectColorGridsPromise ??= readProjectColorGrids()
-  return projectColorGridsPromise
-}
-
-async function readProjectColorGrids(): Promise<ProjectColorGrids> {
-  const results = await Promise.allSettled(projectPlacements.map(async (project) => [
-    project.id,
-    project.source
-      ? await extractImageColorGrid(project.source, project.columns, project.rows, { maxSampleDimension: 256 })
-      : laTourettePattern,
-  ] as const))
-
-  // A failed image leaves only that project's background; other positions stay fixed.
-  return Object.fromEntries(results.flatMap((result) =>
-    result.status === 'fulfilled' ? [result.value] : [],
-  ))
 }

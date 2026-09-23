@@ -41,6 +41,8 @@ export interface KnitScrollPatternProps extends HTMLAttributes<HTMLDivElement> {
   /** Sticky scroll distance; cannot be shorter than the fabric reveal distance. */
   scrollLength?: number | string
   stitchOrder?: KnitScrollStitchOrder
+  /** Number of revealed stitches, including updates when scrolling backward. */
+  onRevealChange?: (visibleStitchCount: number) => void
 }
 
 export function KnitScrollPattern({
@@ -50,6 +52,7 @@ export function KnitScrollPattern({
   needle,
   scrollLength,
   stitchOrder = 'alternating',
+  onRevealChange,
   style,
   ...props
 }: KnitScrollPatternProps) {
@@ -71,6 +74,7 @@ export function KnitScrollPattern({
     needleMaxSpeed,
     needleAngle,
     revealController,
+    onRevealChange,
   )
   const revealScrollLength =
     fabricScrollSpeed > 0 ? totalFabricHeight / fabricScrollSpeed : 0
@@ -134,6 +138,7 @@ function useKnitScrollMotion(
   needleMaxSpeed: number,
   needleAngle: number,
   revealController: ReturnType<typeof createScrollRevealController>,
+  onRevealChange: KnitScrollPatternProps['onRevealChange'],
 ) {
   const needleMotionOffsetRef = useRef(0)
 
@@ -144,6 +149,7 @@ function useKnitScrollMotion(
     let frame = 0
     let previousScrollTop: number | undefined
     let previousTime: number | undefined
+    let previousVisibleCount: number | undefined
 
     const updateProgress = (time: number) => {
       frame = 0
@@ -193,7 +199,12 @@ function useKnitScrollMotion(
         setCssProperty(needles, '--knit-scroll-needle-right-x', `${pierce * -34}px`)
         setCssProperty(needles, '--knit-scroll-needle-right-y', `${lift * 12}px`)
       }
-      revealController.update(getVisibleStitchCountAtOffset(children, revealOffset))
+      const visibleCount = getVisibleStitchCountAtOffset(children, revealOffset)
+      revealController.update(visibleCount)
+      if (visibleCount !== previousVisibleCount) {
+        previousVisibleCount = visibleCount
+        onRevealChange?.(visibleCount)
+      }
     }
     const requestUpdate = () => {
       if (frame === 0) frame = window.requestAnimationFrame(updateProgress)
@@ -225,7 +236,7 @@ function useKnitScrollMotion(
       window.removeEventListener('scroll', requestUpdate)
       prefersReducedMotion.removeEventListener('change', resetMeasurements)
     }
-  }, [children, fabricScrollSpeed, needleAngle, needleMotionSpeed, needleMaxSpeed, revealController, rootRef, totalFabricHeight])
+  }, [children, fabricScrollSpeed, needleAngle, needleMotionSpeed, needleMaxSpeed, onRevealChange, revealController, rootRef, totalFabricHeight])
 }
 
 function setCssProperty(element: HTMLElement, property: string, value: string) {

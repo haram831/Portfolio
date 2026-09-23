@@ -1,19 +1,12 @@
-import { extractImageColorGrid, validateKnitPattern } from '@knit-ui/core'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { validateKnitPattern } from '@knit-ui/core'
+import { describe, expect, it } from 'vitest'
 import {
   createProjectPattern,
+  figmaProjectColorGrids,
   laTourettePattern,
-  loadProjectColorGrids,
   projectPlacements,
 } from './ProjectPattern'
 import { homePalette } from './homeFigmaPattern'
-
-vi.mock('@knit-ui/core', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@knit-ui/core')>(),
-  extractImageColorGrid: vi.fn(),
-}))
-
-afterEach(() => vi.resetAllMocks())
 
 describe('ProjectPattern', () => {
   it('matches the six Figma footprints with full & false shifted right once', () => {
@@ -41,7 +34,7 @@ describe('ProjectPattern', () => {
     }
   })
 
-  it('keeps a stable fabric and existing colors before images load', () => {
+  it('renders the Figma colors immediately in a stable fabric', () => {
     const pattern = createProjectPattern()
 
     expect(pattern.castOn).toBe(19)
@@ -51,10 +44,21 @@ describe('ProjectPattern', () => {
     expect(pattern.rows[0]?.stitches[0]?.color).toBe(homePalette.grey)
     expect(pattern.rows[0]?.stitches[1]?.color).toBe(homePalette.darkGrey)
     expect(pattern.rows[38]?.stitches[2]?.color).toBe(laTourettePattern[0][0])
-    expect(pattern.rows[49]?.stitches[16]?.color).toBe(laTourettePattern[11][8])
+    expect(pattern.rows[49]?.stitches[16]?.color).toBe(laTourettePattern[11][14])
+    expect(pattern.rows[6]?.stitches.slice(12, 16).map(({ color }) => color))
+      .toEqual(['#FFFFFF', '#FFFFFF', '#000000', '#000000'])
+    expect(pattern.rows[13]?.stitches.slice(2, 7).map(({ color }) => color))
+      .toEqual(['#FF4367', '#B8D0FF', '#FF4367', '#B8D0FF', '#FF4367'])
+    expect(pattern.rows[20]?.stitches[12]).toMatchObject({
+      leftColor: '#6DC80A', rightColor: '#FF0306',
+    })
+    expect(pattern.rows[42]?.stitches[8]).toMatchObject({
+      leftColor: '#A58E84', rightColor: '#725E53',
+    })
     expect(pattern.cables?.[0]).toMatchObject({
       row: 2, height: 7, leftStartStitch: 3, rightEndStitch: 6,
     })
+    expect(pattern.cables?.[0]?.color).toEqual(figmaProjectColorGrids['full-false'])
   })
 
   it('paints precisely each project footprint without moving its neighbors', () => {
@@ -73,17 +77,22 @@ describe('ProjectPattern', () => {
     expect(pattern.rows[2]?.stitches[2]?.color).toBe(homePalette.darkGrey)
   })
 
-  it('retains the other projects if an image fails', async () => {
-    vi.mocked(extractImageColorGrid).mockImplementation(async (source, columns, rows) => {
-      if (source === '/trueFalse.jpg') throw new Error('Image unavailable')
-      return Array.from({ length: rows }, () => Array<string>(columns).fill('#abcdef'))
-    })
+  it('renders 하지 못한 말 with the Figma hourglass shading and split corner legs', () => {
+    const rows = createProjectPattern().rows.slice(26, 33)
+      .map(({ stitches }) => stitches.slice(2, 7))
 
-    const colors = await loadProjectColorGrids()
-    expect(colors['full-false']).toBeUndefined()
-    expect(colors['la-tourette']).toEqual(laTourettePattern)
-    expect(colors.hangsha).toHaveLength(8)
-    expect(colors.adreboa?.[0]).toHaveLength(5)
-    expect(createProjectPattern(colors).rows[13]?.stitches[2]?.color).toBe('#abcdef')
+    expect(rows.map((row) => row.map(({ color }) => color))).toEqual([
+      ['#000000', '#838383', '#C0C0C0', '#838383', '#3F3F3F'],
+      ['#000000', '#838383', '#C0C0C0', '#838383', '#000000'],
+      ['#000000', '#3F3F3F', '#838383', '#3F3F3F', '#000000'],
+      ['#000000', '#3F3F3F', '#838383', '#3F3F3F', '#000000'],
+      ['#000000', '#3F3F3F', '#838383', '#3F3F3F', '#000000'],
+      ['#000000', '#838383', '#C0C0C0', '#838383', '#000000'],
+      ['#000000', '#838383', '#C0C0C0', '#838383', '#3F3F3F'],
+    ])
+    for (const row of [rows[0], rows[6]]) {
+      expect(row?.[0]).toMatchObject({ leftColor: '#000000', rightColor: '#3F3F3F' })
+      expect(row?.[4]).toMatchObject({ leftColor: '#3F3F3F', rightColor: '#000000' })
+    }
   })
 })
