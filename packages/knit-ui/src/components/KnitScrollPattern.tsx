@@ -29,7 +29,10 @@ export interface KnitScrollNeedleOptions {
   highlightColor?: string
   thickness?: number | string
   angle?: number
+  /** Scroll sensitivity: at 1, one cycle per 420 CSS pixels, independent of viewport width. */
   speed?: number
+  /** Maximum cycles per second. Defaults to 3; 0 freezes the needles. */
+  maxSpeed?: number
 }
 
 export interface KnitScrollPatternProps extends HTMLAttributes<HTMLDivElement> {
@@ -53,6 +56,9 @@ export function KnitScrollPattern({
   const rootRef = useRef<HTMLDivElement>(null)
   const fabricScrollSpeed = normalizeFabricScrollSpeed(fabricSpeed)
   const needleMotionSpeed = normalizeNeedleMotionSpeed(needle?.speed)
+  const needleMaxSpeed = typeof needle?.maxSpeed === 'number' && Number.isFinite(needle.maxSpeed)
+    ? Math.max(0, needle.maxSpeed)
+    : 3
   const needleAngle = needle?.angle ?? 13.63
   const revealController = useMemo(() => createScrollRevealController(), [])
   const totalFabricHeight = useMemo(() => getScrollableFabricHeight(children), [children])
@@ -62,6 +68,7 @@ export function KnitScrollPattern({
     totalFabricHeight,
     fabricScrollSpeed,
     needleMotionSpeed,
+    needleMaxSpeed,
     needleAngle,
     revealController,
   )
@@ -124,10 +131,10 @@ function useKnitScrollMotion(
   totalFabricHeight: number,
   fabricScrollSpeed: number,
   needleMotionSpeed: number,
+  needleMaxSpeed: number,
   needleAngle: number,
   revealController: ReturnType<typeof createScrollRevealController>,
 ) {
-  const previousScrollTopRef = useRef<number | undefined>(undefined)
   const needleMotionOffsetRef = useRef(0)
 
   useEffect(() => {
@@ -135,8 +142,10 @@ function useKnitScrollMotion(
       '(prefers-reduced-motion: reduce)',
     )
     let frame = 0
+    let previousScrollTop: number | undefined
+    let previousTime: number | undefined
 
-    const updateProgress = () => {
+    const updateProgress = (time: number) => {
       frame = 0
       const root = rootRef.current
 
@@ -147,17 +156,20 @@ function useKnitScrollMotion(
       const rect = root.getBoundingClientRect()
       const scrollDistance = Math.max(1, root.offsetHeight - window.innerHeight)
       const scrollTop = clampNumber(-rect.top, 0, scrollDistance)
-      const previousScrollTop = previousScrollTopRef.current
+      const reduced = prefersReducedMotion.matches
 
-      if (previousScrollTop !== undefined) {
-        needleMotionOffsetRef.current +=
-          ((scrollTop - previousScrollTop) * needleMotionSpeed) /
+      if (previousScrollTop !== undefined && previousTime !== undefined && !reduced) {
+        // Do not bank idle/background time for a large jump on the next scroll.
+        const elapsed = Math.min(Math.max(0, time - previousTime), 1000 / 30) / 1000
+        const requestedMotion = ((scrollTop - previousScrollTop) * needleMotionSpeed) /
           NEEDLE_SCROLL_PIXELS_PER_LOOP
+        const maximumMotion = needleMaxSpeed * elapsed
+        needleMotionOffsetRef.current += clampNumber(requestedMotion, -maximumMotion, maximumMotion)
       }
 
-      previousScrollTopRef.current = scrollTop
+      previousScrollTop = scrollTop
+      previousTime = time
 
-      const reduced = prefersReducedMotion.matches
       const revealOffset = getFabricRevealOffset(
         totalFabricHeight,
         reduced ? Number.POSITIVE_INFINITY : scrollTop,
@@ -186,29 +198,34 @@ function useKnitScrollMotion(
     const requestUpdate = () => {
       if (frame === 0) frame = window.requestAnimationFrame(updateProgress)
     }
+    const resetMeasurements = () => {
+      previousScrollTop = undefined
+      previousTime = undefined
+      requestUpdate()
+    }
 
     requestUpdate()
     const resizeObserver =
       typeof ResizeObserver === 'undefined'
         ? undefined
-        : new ResizeObserver(requestUpdate)
+        : new ResizeObserver(resetMeasurements)
 
     if (rootRef.current) {
       resizeObserver?.observe(rootRef.current)
     }
 
-    window.addEventListener('resize', requestUpdate)
+    window.addEventListener('resize', resetMeasurements)
     window.addEventListener('scroll', requestUpdate, { passive: true })
-    prefersReducedMotion.addEventListener('change', requestUpdate)
+    prefersReducedMotion.addEventListener('change', resetMeasurements)
 
     return () => {
       window.cancelAnimationFrame(frame)
       resizeObserver?.disconnect()
-      window.removeEventListener('resize', requestUpdate)
+      window.removeEventListener('resize', resetMeasurements)
       window.removeEventListener('scroll', requestUpdate)
-      prefersReducedMotion.removeEventListener('change', requestUpdate)
+      prefersReducedMotion.removeEventListener('change', resetMeasurements)
     }
-  }, [children, fabricScrollSpeed, needleAngle, needleMotionSpeed, revealController, rootRef, totalFabricHeight])
+  }, [children, fabricScrollSpeed, needleAngle, needleMotionSpeed, needleMaxSpeed, revealController, rootRef, totalFabricHeight])
 }
 
 function setCssProperty(element: HTMLElement, property: string, value: string) {

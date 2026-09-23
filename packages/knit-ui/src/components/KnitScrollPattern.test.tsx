@@ -14,6 +14,42 @@ afterEach(() => {
 const scrollPattern = makeScrollPattern(2)
 
 describe('KnitScrollPattern needle motion', () => {
+  it('uses the same scroll sensitivity and speed limit at mobile and desktop widths', () => {
+    for (const width of [375, 1440]) {
+      vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(width)
+      const motion = renderNeedleMotion()
+      motion.scroll(4.2, 20)
+      motion.expectCycles(0.01)
+      motion.scroll(12.6, 40)
+      motion.expectCycles(0.03)
+      // A fast flick is limited to 3 cycles/second × 20ms.
+      motion.scroll(1012.6, 60)
+      motion.expectCycles(0.09)
+      motion.scroll(12.6, 80)
+      motion.expectCycles(0.03)
+      motion.scroll(12.6, 100)
+      motion.expectCycles(0.03)
+      motion.unmount()
+    }
+  })
+
+  it('honors a custom maximum without accumulating motion during idle time', () => {
+    const motion = renderNeedleMotion(1)
+    motion.scroll(1000, 20)
+    motion.expectCycles(0.02)
+    motion.scroll(2000, 10020)
+    motion.expectCycles(0.02 + 1 / 30)
+    motion.unmount()
+  })
+
+  it('allows freezing needles while fabric continues scrolling', () => {
+    const motion = renderNeedleMotion(0)
+    motion.scroll(100, 20)
+    motion.expectCycles(0)
+    expect(getFabricStyle(motion.root).getPropertyValue('--knit-scroll-fabric-y')).toBe('0px')
+    motion.unmount()
+  })
+
   it('moves needles by scroll distance instead of scroll progress', async () => {
     const shortScroll = await getScrollStateAfterDistance({
       scrollableHeight: 2000,
@@ -30,6 +66,41 @@ describe('KnitScrollPattern needle motion', () => {
     expect(shortScroll.needleLeftY).toBe(longScroll.needleLeftY)
   })
 })
+
+function renderNeedleMotion(maxSpeed?: number) {
+  let callback: FrameRequestCallback | undefined
+  vi.spyOn(window, 'requestAnimationFrame').mockImplementation((next) => {
+    callback = next
+    return 1
+  })
+  vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {})
+  const { unmount } = render(
+    <KnitScrollPattern aria-label="needle test" fabricSpeed={1} needle={{ visible: true, maxSpeed }}>
+      <KnitPattern pattern={scrollPattern} />
+    </KnitScrollPattern>,
+  )
+  const root = screen.getByLabelText('needle test')
+  const scroll = (scrollTop: number, time: number) => {
+    setScrollMetrics(root, { scrollableHeight: 11000, scrollTop })
+    fireEvent.scroll(window)
+    act(() => {
+      const next = callback
+      callback = undefined
+      next?.(time)
+    })
+  }
+  scroll(0, 0)
+  return {
+    root,
+    scroll,
+    unmount,
+    expectCycles(cycles: number) {
+      const style = root.querySelector<HTMLElement>('.knit-scroll-pattern__needles')!.style
+      expect(Number.parseFloat(style.getPropertyValue('--knit-scroll-needle-left-y')))
+        .toBeCloseTo(Math.sin(cycles * Math.PI * 2) * -7, 8)
+    },
+  }
+}
 
 describe('KnitScrollPattern fabric motion', () => {
   it('preserves bottom-up group order and the space between patterns', async () => {
@@ -194,7 +265,7 @@ async function getScrollStateAfterDistance(metrics: ScrollMetrics) {
     <KnitScrollPattern
       aria-label="scroll pattern"
       fabricSpeed={1}
-      needle={{ visible: true }}
+      needle={{ visible: true, maxSpeed: 1000 }}
     >
       <KnitPattern pattern={metrics.pattern ?? scrollPattern} />
     </KnitScrollPattern>,
