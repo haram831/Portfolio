@@ -1,3 +1,7 @@
+import { extractImageColorGrid } from '@knit-ui/core'
+import type { KnitPatternData } from '@knit-ui/core'
+import { homePalette } from './homeFigmaPattern'
+
 export const laTouretteColorPalette = {
   green1: '#94B04A',
   green2: '#48A900',
@@ -115,4 +119,90 @@ yellowGreen: '#D9E82B',
 blue: '#92CABD',
 lightGreen: '#B7F1AB',
 white: '#FDFDFF',
+}
+
+export interface ProjectPlacement {
+  id: string
+  startColumn: number
+  startRow: number
+  columns: number
+  rows: number
+  source?: string
+}
+
+// Figma 92:7176: zero-based positions in a 19-column, 52-row fabric.
+// Only geometry is taken from Figma, not its colors or text labels.
+export const projectPlacements: ProjectPlacement[] = [
+  // Figma starts at column 2; move full & false one stitch to the right.
+  { id: 'full-false', startColumn: 3, startRow: 2, columns: 4, rows: 7, source: '/trueFalse.jpg' },
+  { id: 'soft-copy-deep-copy', startColumn: 12, startRow: 6, columns: 4, rows: 8, source: '/hardCopyDeepCopy.jpg' },
+  { id: 'hangsha', startColumn: 2, startRow: 13, columns: 5, rows: 8, source: '/hangsha.png' },
+  { id: 'hourglass', startColumn: 2, startRow: 26, columns: 5, rows: 7, source: '/getYourRing.jpg' },
+  { id: 'adreboa', startColumn: 12, startRow: 18, columns: 5, rows: 14, source: '/adreboa.jpg' },
+  { id: 'la-tourette', startColumn: 2, startRow: 38, columns: 15, rows: 12 },
+]
+
+export type ProjectColorGrids = Record<string, readonly (readonly string[])[]>
+
+export function createProjectPattern(colors: ProjectColorGrids = {}): KnitPatternData {
+  const colorGrids: ProjectColorGrids = { 'la-tourette': laTourettePattern, ...colors }
+  const fullFalse = projectPlacements[0]!
+
+  return {
+    castOn: 19,
+    rows: Array.from({ length: 52 }, (_, rowIndex) => ({
+      stitches: Array.from({ length: 19 }, (_, columnIndex) => {
+        const project = projectPlacements.find((placement) =>
+          rowIndex >= placement.startRow && rowIndex < placement.startRow + placement.rows &&
+          columnIndex >= placement.startColumn && columnIndex < placement.startColumn + placement.columns,
+        )
+        const grid = project ? colorGrids[project.id] : undefined
+        // Keep the saved La Tourette colors, resampling its nine columns to fifteen.
+        const sourceRow = project && grid?.length
+          ? grid[Math.floor((rowIndex - project.startRow) * grid.length / project.rows)]
+          : undefined
+        const color = project && sourceRow?.length
+          ? sourceRow[Math.floor((columnIndex - project.startColumn) * sourceRow.length / project.columns)]
+          : undefined
+
+        return {
+          kind: columnIndex % 2 === 0 ? 'knit' as const : 'purl' as const,
+          color: color ?? (columnIndex === 0 || columnIndex === 18 ? homePalette.grey : homePalette.darkGrey),
+        }
+      }),
+    })),
+    cables: [{
+      row: fullFalse.startRow,
+      height: fullFalse.rows,
+      leftStartStitch: fullFalse.startColumn,
+      leftEndStitch: fullFalse.startColumn + 1,
+      rightStartStitch: fullFalse.startColumn + 2,
+      rightEndStitch: fullFalse.startColumn + 3,
+      cross: 'left-over-right',
+      // Sample the project image across the visible crossing.
+      color: colors[fullFalse.id]?.map((row) => [...row]),
+    }],
+  }
+}
+
+let projectColorGridsPromise: Promise<ProjectColorGrids> | undefined
+
+export function loadProjectColorGrids(): Promise<ProjectColorGrids> {
+  // Reuse image sampling across StrictMode effects and returns to the home page.
+  projectColorGridsPromise ??= readProjectColorGrids()
+  return projectColorGridsPromise
+}
+
+async function readProjectColorGrids(): Promise<ProjectColorGrids> {
+  const results = await Promise.allSettled(projectPlacements.map(async (project) => [
+    project.id,
+    project.source
+      ? await extractImageColorGrid(project.source, project.columns, project.rows)
+      : laTourettePattern,
+  ] as const))
+
+  // A failed image leaves only that project's background; other positions stay fixed.
+  return Object.fromEntries(results.flatMap((result) =>
+    result.status === 'fulfilled' ? [result.value] : [],
+  ))
 }

@@ -1,14 +1,11 @@
 import { KnitPattern, KnitScrollPattern } from '@knit-ui/core'
 import type { KnitStitchPositionTarget } from '@knit-ui/core'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { homePalette, homePattern } from './homeFigmaPattern'
+import { homePalette } from './homeFigmaPattern'
+import { connectHomeProjectPattern } from './homeContinuousPattern'
+import { createProjectPattern, loadProjectColorGrids } from './ProjectPattern'
 import './Home.css'
-
-const homeTestLinkPositions: KnitStitchPositionTarget[] = Array.from(
-  { length: 7 },
-  (_, index) => ({ columnIndex: 1, rowIndex: index + 6 }),
-)
 
 interface HomeProps {
   onNavigateToTest?: () => void
@@ -19,6 +16,22 @@ function Home({ onNavigateToTest }: HomeProps) {
   const scrollIndicatorRef = useRef<HTMLDivElement>(null)
   const [scrollIndicatorOpacity, setScrollIndicatorOpacity] = useState(1)
   const [stitchSize, setStitchSize] = useState(getHomeStitchSize)
+  const [projectPattern, setProjectPattern] = useState(createProjectPattern)
+  const pattern = useMemo(() => connectHomeProjectPattern(projectPattern), [projectPattern])
+  const homeTestLinkPositions: KnitStitchPositionTarget[] = Array.from(
+    { length: 7 },
+    (_, index) => ({ columnIndex: 1, rowIndex: projectPattern.rows.length + index + 6 }),
+  )
+
+  useEffect(() => {
+    let active = true
+
+    void loadProjectColorGrids().then((colors) => {
+      if (active) setProjectPattern(createProjectPattern(colors))
+    })
+
+    return () => { active = false }
+  }, [])
 
   useEffect(() => {
     let frame = 0
@@ -76,14 +89,14 @@ function Home({ onNavigateToTest }: HomeProps) {
         }}
       >
         <KnitPattern
-          aria-label="Figma matched grey and white knit purl portfolio pattern"
+          aria-label="Continuous design portfolio and project knit pattern"
           density="compact"
           gap={0}
           interactiveStitchPositions={
             enableTestNavigation ? homeTestLinkPositions : undefined
           }
           onStitchClick={enableTestNavigation ? onNavigateToTest : undefined}
-          pattern={homePattern}
+          pattern={pattern}
           rowAlign="start"
           rowGap={0}
           stitchOverlap={0}
@@ -102,8 +115,8 @@ function Home({ onNavigateToTest }: HomeProps) {
 }
 
 function getHomeStitchSize(): number {
-  // The Figma canvas is 1440px wide, with a 50px row pitch.
-  return typeof window === 'undefined' ? 50 : Math.min(50, window.innerWidth / 28.8)
+  // One shared stitch size for the entire 19-column fabric, including side margins.
+  return typeof window === 'undefined' ? 50 : Math.min(50, window.innerWidth / 32)
 }
 
 function clampNumber(value: number, min: number, max: number): number {

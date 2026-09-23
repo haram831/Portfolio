@@ -33,9 +33,9 @@
 }
 
 .home-knit-scroll .knit-pattern-view__fabric {
-  /* Figma: nine 95px knit columns alternating with eight 50px purl columns. */
+  /* A continuous 19-column fabric for both the title and projects. */
   grid-template-columns: repeat(
-      8,
+      9,
       calc(var(--home-stitch-size) * 1.9) var(--home-stitch-size)
     ) calc(var(--home-stitch-size) * 1.9);
 }
