@@ -17,6 +17,10 @@ export interface KnitPalette {
 export interface KnitStitch {
   kind: StitchKind
   color?: string
+  /** Left leg color for knit stitches; overrides the base stitch/cable color. */
+  leftColor?: string
+  /** Right leg color for knit stitches; overrides the base stitch/cable color. */
+  rightColor?: string
   span?: number
 }
 

@@ -135,6 +135,14 @@
   transform-origin: center;
 }
 
+.knit-stitch-unit__thread--left {
+  stroke: var(--knit-stitch-left-color, currentColor);
+}
+
+.knit-stitch-unit__thread--right {
+  stroke: var(--knit-stitch-right-color, currentColor);
+}
+
 .knit-stitch-unit--resolved-mistake .knit-stitch-unit__thread {
   animation: knit-stitch-resolve 620ms cubic-bezier(0.2, 0.8, 0.2, 1);
   stroke-dasharray: 220;

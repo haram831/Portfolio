@@ -60,6 +60,17 @@ const homeHighlightPattern = [
   ',....................,',
 ] as const
 
+const posterHighlightPattern = [
+  ',##..#..##.###.##.##.,',
+  ',#.##.#.#...#..#..#.#,',
+  ',##.#.#..#..#..##.##.,',
+  ',#..#.#..#..#..#..#.#,',
+  ',#...#..##..#..##.#.#,',
+  ',....................,',
+] as const
+
+const homePatternRows = [...homeHighlightPattern, ...posterHighlightPattern]
+
 const homeColumnSpecs = Array.from({ length: 22 }, (_, columnIndex) => ({
   kind: columnIndex % 2 === 0 ? 'knit' : 'purl',
   span: 1,
@@ -80,7 +91,7 @@ const HOME_NEEDLE_ANGLE = 15
 const HOME_NEEDLE_SPEED = 1
 const HOME_NEEDLE_THICKNESS = 18
 const HOME_PATTERN_ARIA_LABEL =
-  'Figma matched grey and white knit purl portfolio pattern'
+  'Figma matched grey and white knit purl portfolio pattern with POSTER lettering'
 const HOME_SCROLL_ARIA_LABEL = 'portfolio knitting stage'
 const HOME_STITCH_DENSITY = 'compact'
 const HOME_MISTAKE_FREQUENCY = 0.01
@@ -119,8 +130,8 @@ const homeProjectPatterns: HomeProjectPatternDefinition[] = [
     startColumn: 2,
   },
   {
-    columns: 8,
-    rows: 11,
+    columns: 10,
+    rows: 10,
     source: '/hangsha.png',
     startColumn: 11,
   },
@@ -146,7 +157,7 @@ const homePattern: KnitPatternData = {
   palette: {
     colors: [homePalette.darkGrey, homePalette.grey, homePalette.white],
   },
-  rows: homeHighlightPattern.map((_, rowIndex) => ({
+  rows: homePatternRows.map((_, rowIndex) => ({
     stitches: makeHomePatternRow(rowIndex),
   })),
 }
@@ -162,7 +173,7 @@ interface HomeProps {
 }
 
 function makeHomePatternRow(rowIndex: number) {
-  const highlightRow = homeHighlightPattern[rowIndex] ?? ''
+  const highlightRow = homePatternRows[rowIndex] ?? ''
 
   return homeColumnSpecs.map(({ kind, span }, visualColumnIndex) => ({
     color: getUnitColor(highlightRow[visualColumnIndex]),

@@ -9,6 +9,10 @@ export interface KnitStitchUnitProps
   extends Omit<SVGProps<SVGSVGElement>, 'color'> {
   kind: StitchKind
   color?: string
+  /** Left leg color for knit stitches; defaults to the base color. */
+  leftColor?: string
+  /** Right leg color for knit stitches; defaults to the base color. */
+  rightColor?: string
   size?: number | string
   strokeWidth?: number | string
 }
@@ -16,6 +20,8 @@ export interface KnitStitchUnitProps
 export function KnitStitchUnit({
   kind,
   color,
+  leftColor,
+  rightColor,
   size = 48,
   strokeWidth,
   className,
@@ -29,6 +35,8 @@ export function KnitStitchUnit({
     ...style,
     '--knit-stitch-aspect-ratio': STITCH_ASPECT_RATIO,
     '--knit-stitch-color': color,
+    ...(leftColor !== undefined ? { '--knit-stitch-left-color': leftColor } : {}),
+    ...(rightColor !== undefined ? { '--knit-stitch-right-color': rightColor } : {}),
     '--knit-stitch-size': typeof size === 'number' ? `${size}px` : size,
     ...(strokeWidth
       ? {
@@ -61,11 +69,11 @@ function KnitShape() {
   return (
     <>
       <path
-        className="knit-stitch-unit__thread"
+        className="knit-stitch-unit__thread knit-stitch-unit__thread--left"
         d="M22.6 28.4C22.6 28.4 36 44.1 40.9 56.1C45.8 68.1 48.6 91.6 48.6 91.6"
       />
       <path
-        className="knit-stitch-unit__thread"
+        className="knit-stitch-unit__thread knit-stitch-unit__thread--right"
         d="M105.6 28.4C105.6 28.4 94.8 37.9 89.9 49.9C85 61.9 79.5 91.6 79.5 91.6"
       />
     </>

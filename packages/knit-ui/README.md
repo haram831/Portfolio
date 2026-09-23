@@ -1,3 +1,32 @@
+## 겉뜨기 좌우 배색
+
+`KnitStitchUnit`의 `leftColor`와 `rightColor`로 겉뜨기 코의 왼쪽·오른쪽 선 색상을 각각 지정합니다.
+생략한 쪽은 기존 `color` 및 CSS 색상 fallback을 사용합니다. 두 속성은 `kind="knit"`에서만 시각적으로 적용됩니다.
+
+```tsx
+import { KnitPattern, KnitStitchUnit } from '@knit-ui/core'
+
+<KnitStitchUnit kind="knit" leftColor="#e789a5" rightColor="#729bc2" />
+
+<KnitPattern
+  pattern={{
+    castOn: 2,
+    palette: { colors: ['#434343'] },
+    rows: [{
+      stitches: [
+        { kind: 'knit', leftColor: '#e789a5', rightColor: '#729bc2' },
+        { kind: 'knit', leftColor: '#e789a5' },
+      ],
+    }],
+  }}
+/>
+```
+
+도안의 각 `KnitStitch`에도 같은 속성을 사용할 수 있으며, 케이블과 `KnitScrollPattern`에도 전달됩니다.
+케이블에서는 원본 코의 좌우 색상이 케이블의 기본 `color`보다 우선합니다.
+회전된 케이블 코의 좌우는 회전 전 SVG 기준입니다.
+CSS로는 `--knit-stitch-left-color`, `--knit-stitch-right-color`를 지정할 수 있습니다.
+
 ## 전체 개발 계획서
 
   ### 0. 설계 원칙 문서화

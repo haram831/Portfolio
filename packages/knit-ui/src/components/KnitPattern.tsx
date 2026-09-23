@@ -212,6 +212,8 @@ export function KnitPattern({
                   color={getPatternStitchColor(pattern, stitch)}
                   key={`${rowIndex}-${stitchIndex}`}
                   kind={renderedKind}
+                  leftColor={stitch.leftColor}
+                  rightColor={stitch.rightColor}
                   onClick={
                     isInteractive
                       ? (event) =>
@@ -689,6 +691,8 @@ function KnitCableOverlay({
             color={getCableSegmentColor(pattern, cable, segment)}
             key={`${segment.strand}-${segment.laneIndex}-${segment.rowIndex}`}
             kind={renderedKind}
+            leftColor={sourceStitch?.leftColor}
+            rightColor={sourceStitch?.rightColor}
             onClick={
               isInteractive && sourceStitch
                 ? (event) =>
