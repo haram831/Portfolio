@@ -61,6 +61,31 @@ const cablePattern: KnitPatternData = {
 }
 
 describe('KnitPattern stitch interaction', () => {
+  it.each([false, true])('uses left colors for generated mistakes, including cables (%s)', (withCable) => {
+    const pattern: KnitPatternData = {
+      castOn: 2,
+      rows: [{ stitches: [
+        { kind: 'knit', color: '#123456', leftColor: '#abcdef', rightColor: '#fedcba' },
+        { kind: 'purl', color: '#654321' },
+      ] }],
+      cables: withCable ? [{
+        row: 0, height: 1,
+        leftStartStitch: 0, leftEndStitch: 0,
+        rightStartStitch: 1, rightEndStitch: 1,
+        cross: 'left-over-right',
+      }] : undefined,
+    }
+    const { container } = render(<KnitPattern pattern={pattern} mistakeFrequency={1} />)
+    const mistake = container.querySelector<SVGSVGElement>('svg[style*="--knit-stitch-left-color"]')!
+    expect(mistake).toHaveClass('knit-stitch-unit--mistake')
+    expect(mistake.style.getPropertyValue('--knit-stitch-color')).toBe('#abcdef')
+    fireEvent.click(mistake)
+    expect(mistake).toHaveClass('knit-stitch-unit--knit')
+    expect(mistake.style.getPropertyValue('--knit-stitch-color')).toBe('#123456')
+    expect(mistake.style.getPropertyValue('--knit-stitch-left-color')).toBe('#abcdef')
+    expect(mistake.style.getPropertyValue('--knit-stitch-right-color')).toBe('#fedcba')
+  })
+
   it('keeps every stitch clickable when no target positions are provided', () => {
     const onStitchClick = vi.fn()
 

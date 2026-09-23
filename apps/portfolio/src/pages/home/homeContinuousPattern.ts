@@ -1,8 +1,9 @@
 import type { KnitPatternData } from '@knit-ui/core'
 import { homePalette, homePattern } from './homeFigmaPattern'
+import { homeExperiencePattern } from './homeExperiencePattern'
 
 export function connectHomeProjectPattern(projectPattern: KnitPatternData): KnitPatternData {
-  // Knitting progresses bottom-to-top: the title is made first, then projects.
+  // Bottom-to-top: title first, then projects, then the experience invitation.
   // Add one knit/purl pair before the title's right edge to match all 19 columns.
   const titleRows = homePattern.rows.map(({ stitches }) => ({
     stitches: [
@@ -15,6 +16,14 @@ export function connectHomeProjectPattern(projectPattern: KnitPatternData): Knit
 
   return {
     ...projectPattern,
-    rows: [...projectPattern.rows, ...titleRows],
+    rows: [...homeExperiencePattern.rows, ...projectPattern.rows, ...titleRows],
+    cables: projectPattern.cables?.map((cable) => ({
+      ...cable,
+      row: cable.row + homeExperiencePattern.rows.length,
+    })),
+    accidents: projectPattern.accidents?.map((accident) => ({
+      ...accident,
+      row: accident.row + homeExperiencePattern.rows.length,
+    })),
   }
 }

@@ -4,15 +4,16 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { homePalette } from './homeFigmaPattern'
 import { connectHomeProjectPattern } from './homeContinuousPattern'
+import { experienceLinkPositions, homeExperiencePattern } from './homeExperiencePattern'
 import { createProjectPattern, loadProjectColorGrids } from './ProjectPattern'
 import './Home.css'
 
 interface HomeProps {
   onNavigateToTest?: () => void
+  onNavigateToExperience?: () => void
 }
 
-function Home({ onNavigateToTest }: HomeProps) {
-  const enableTestNavigation = Boolean(onNavigateToTest)
+function Home({ onNavigateToTest, onNavigateToExperience }: HomeProps) {
   const scrollIndicatorRef = useRef<HTMLDivElement>(null)
   const [scrollIndicatorOpacity, setScrollIndicatorOpacity] = useState(1)
   const [stitchSize, setStitchSize] = useState(getHomeStitchSize)
@@ -20,8 +21,15 @@ function Home({ onNavigateToTest }: HomeProps) {
   const pattern = useMemo(() => connectHomeProjectPattern(projectPattern), [projectPattern])
   const homeTestLinkPositions: KnitStitchPositionTarget[] = Array.from(
     { length: 7 },
-    (_, index) => ({ columnIndex: 1, rowIndex: projectPattern.rows.length + index + 6 }),
+    (_, index) => ({
+      columnIndex: 1,
+      rowIndex: homeExperiencePattern.rows.length + projectPattern.rows.length + index + 6,
+    }),
   )
+  const interactivePositions = [
+    ...(onNavigateToTest ? homeTestLinkPositions : []),
+    ...(onNavigateToExperience ? experienceLinkPositions : []),
+  ]
 
   useEffect(() => {
     let active = true
@@ -90,17 +98,23 @@ function Home({ onNavigateToTest }: HomeProps) {
       >
         <KnitPattern
           aria-label="Continuous design portfolio and project knit pattern"
+          aria-description="Try Your Pattern: 흰색 글자 코를 클릭하면 패턴 체험 페이지로 이동합니다."
           density="compact"
           gap={0}
-          interactiveStitchPositions={
-            enableTestNavigation ? homeTestLinkPositions : undefined
-          }
-          onStitchClick={enableTestNavigation ? onNavigateToTest : undefined}
+          interactiveStitchPositions={interactivePositions}
+          onStitchClick={({ rowIndex }) => {
+            if (rowIndex < homeExperiencePattern.rows.length) {
+              onNavigateToExperience?.()
+            } else {
+              onNavigateToTest?.()
+            }
+          }}
           pattern={pattern}
           rowAlign="start"
           rowGap={0}
           stitchOverlap={0}
           stitchSize={stitchSize}
+          mistakeFrequency={0.01}
         />
       </KnitScrollPattern>
       <div

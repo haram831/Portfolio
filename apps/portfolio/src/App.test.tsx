@@ -4,15 +4,25 @@ import {
   render,
   screen,
 } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
+import { experienceLinkPositions, homeExperiencePattern } from './pages/home/homeExperiencePattern'
+
+function getExperienceButton() {
+  const { rowIndex, columnIndex } = experienceLinkPositions[0]!
+  return screen.getByRole('button', {
+    name: new RegExp(`stitch row ${rowIndex + 1}, column ${columnIndex + 1}$`),
+  })
+}
 
 beforeEach(() => {
   window.history.replaceState(null, '', '/')
+  vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
 })
 
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   window.history.replaceState(null, '', '/')
 })
 
@@ -29,11 +39,12 @@ describe('App', () => {
       name: 'Design Portfolio',
     })).not.toBeInTheDocument()
     expect(scrollPattern).toHaveClass('knit-scroll-pattern')
-    expect(knitPattern).toHaveAttribute('data-row-count', '92')
+    const rowCount = 92 + homeExperiencePattern.rows.length
+    expect(knitPattern).toHaveAttribute('data-row-count', String(rowCount))
     expect(document.querySelectorAll('.knit-scroll-pattern')).toHaveLength(1)
     expect(scrollPattern.querySelectorAll('.knit-scroll-pattern__needles')).toHaveLength(1)
     expect(scrollPattern.querySelectorAll('.knit-pattern-view__fabric')).toHaveLength(1)
-    expect(knitPattern.querySelectorAll('.knit-stitch-unit')).toHaveLength(19 * 92)
+    expect(knitPattern.querySelectorAll('.knit-stitch-unit')).toHaveLength(19 * rowCount)
     expect(scrollPattern).not.toHaveTextContent(/full & false|La Tourette|Adreboa/)
   })
 
@@ -41,12 +52,39 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', {
-      name: /purl stitch row 59, column 2/,
+      name: new RegExp(`purl stitch row ${59 + homeExperiencePattern.rows.length}, column 2$`),
     }))
 
     expect(window.location.pathname).toBe('/test')
     expect(screen.getByRole('heading', {
       name: 'Knit UI System',
     })).toBeInTheDocument()
+  })
+
+  it('opens an empty experience page when the invitation is clicked', () => {
+    render(<App />)
+    fireEvent.click(getExperienceButton())
+
+    expect(window.location.pathname).toBe('/experience')
+    expect(screen.getByRole('main', { name: '패턴 체험 페이지' })).toBeEmptyDOMElement()
+    expect(screen.queryByLabelText('portfolio knitting stage')).not.toBeInTheDocument()
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, left: 0, behavior: 'instant' })
+  })
+
+  it.each(['Enter', ' '])('opens the experience page with the %s key', (key) => {
+    render(<App />)
+    fireEvent.keyDown(getExperienceButton(), { key })
+    expect(window.location.pathname).toBe('/experience')
+    expect(screen.getByRole('main', { name: '패턴 체험 페이지' })).toBeEmptyDOMElement()
+  })
+
+  it('supports direct experience URLs and history navigation back to home', () => {
+    window.history.replaceState(null, '', '/experience')
+    render(<App />)
+    expect(screen.getByRole('main', { name: '패턴 체험 페이지' })).toBeEmptyDOMElement()
+
+    window.history.replaceState(null, '', '/')
+    fireEvent.popState(window)
+    expect(screen.getByLabelText('portfolio knitting stage')).toBeInTheDocument()
   })
 })

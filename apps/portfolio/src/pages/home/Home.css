@@ -49,7 +49,8 @@
 
 /* Exact Figma exports supply the outlines; the library still supplies color,
    keyboard interaction, and scroll reveal for each individual stitch. */
-.home-knit-scroll .knit-stitch-unit > path {
+.home-knit-scroll .knit-stitch-unit--knit > path,
+.home-knit-scroll .knit-stitch-unit--purl > path {
   display: none;
 }
 
@@ -73,6 +74,13 @@
   margin-top: calc(var(--home-stitch-size) * 0.065658);
   mask-image: url('../../assets/figma/home-purl.svg');
   background: currentColor;
+}
+
+/* Mistakes use the library SVG rather than the left-aligned Figma masks.
+   Center that SVG in either a wide knit column or a narrow purl column. */
+.home-knit-scroll .knit-pattern-view__stitch.knit-stitch-unit--mistake {
+  justify-self: center;
+  align-self: center;
 }
 
 .home-knit-scroll .knit-stitch-unit--interactive:focus-visible {
@@ -112,4 +120,10 @@
   pointer-events: none;
   will-change: opacity;
   z-index: 5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-scroll-indicator {
+    display: none;
+  }
 }

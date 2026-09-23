@@ -9,7 +9,7 @@ export interface KnitStitchUnitProps
   extends Omit<SVGProps<SVGSVGElement>, 'color'> {
   kind: StitchKind
   color?: string
-  /** Left leg color for knit stitches; defaults to the base color. */
+  /** Left leg color for knit stitches; also the preferred color for mistakes. */
   leftColor?: string
   /** Right leg color for knit stitches; defaults to the base color. */
   rightColor?: string
@@ -34,7 +34,7 @@ export function KnitStitchUnit({
   const stitchStyle = {
     ...style,
     '--knit-stitch-aspect-ratio': STITCH_ASPECT_RATIO,
-    '--knit-stitch-color': color,
+    '--knit-stitch-color': kind === 'mistake' ? leftColor ?? color : color,
     ...(leftColor !== undefined ? { '--knit-stitch-left-color': leftColor } : {}),
     ...(rightColor !== undefined ? { '--knit-stitch-right-color': rightColor } : {}),
     '--knit-stitch-size': typeof size === 'number' ? `${size}px` : size,
