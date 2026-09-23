@@ -20,7 +20,6 @@
   position: absolute;
   inset: 0 0 auto;
   height: 100svh;
-  pointer-events: none;
   z-index: 4;
 }
 
@@ -31,6 +30,7 @@
   transform: translateX(-50%);
   width: max-content;
   max-width: calc(100% - 32px);
+  pointer-events: none;
 }
 
 .experience-instruction span span {
@@ -172,6 +172,9 @@
   .experience-save { left: 16px; top: 12px; }
   .experience-input-row { gap: 12px; }
   .experience-upload span { display: none; }
+  .experience-knit-scroll .knit-scroll-pattern__needles {
+    top: calc(var(--portfolio-needle-unit) * 3.58);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
