@@ -22,9 +22,9 @@ describe('KnitScrollPattern needle motion', () => {
       motion.expectCycles(0.01)
       motion.scroll(12.6, 40)
       motion.expectCycles(0.03)
-      // A fast flick is limited to 3 cycles/second × 20ms.
+      // A fast flick is limited to 5 cycles/second × 20ms.
       motion.scroll(1012.6, 60)
-      motion.expectCycles(0.09)
+      motion.expectCycles(0.17)
       motion.scroll(12.6, 80)
       motion.expectCycles(0.03)
       motion.scroll(12.6, 100)

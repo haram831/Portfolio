@@ -31,7 +31,7 @@ export interface KnitScrollNeedleOptions {
   angle?: number
   /** Scroll sensitivity: at 1, one cycle per 420 CSS pixels, independent of viewport width. */
   speed?: number
-  /** Maximum cycles per second. Defaults to 3; 0 freezes the needles. */
+  /** Maximum cycles per second. Defaults to 5; 0 freezes the needles. */
   maxSpeed?: number
 }
 
@@ -58,7 +58,7 @@ export function KnitScrollPattern({
   const needleMotionSpeed = normalizeNeedleMotionSpeed(needle?.speed)
   const needleMaxSpeed = typeof needle?.maxSpeed === 'number' && Number.isFinite(needle.maxSpeed)
     ? Math.max(0, needle.maxSpeed)
-    : 3
+    : 5
   const needleAngle = needle?.angle ?? 13.63
   const revealController = useMemo(() => createScrollRevealController(), [])
   const totalFabricHeight = useMemo(() => getScrollableFabricHeight(children), [children])

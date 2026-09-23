@@ -79,8 +79,7 @@
   cursor: default;
 }
 
-.experience-button:focus-visible,
-.experience-text-field input:focus-visible {
+.experience-button:focus-visible {
   outline: 1px solid #fff;
   outline-offset: 5px;
 }
@@ -130,6 +129,14 @@
 
 .experience-text-field input::placeholder {
   color: rgb(255 255 255 / 65%);
+}
+
+.experience-text-field input:focus {
+  outline: none;
+}
+
+.experience-text-field:focus-within {
+  box-shadow: 0 1px 0 #fff;
 }
 
 .experience-input-meta {
