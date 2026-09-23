@@ -197,7 +197,7 @@ async function readProjectColorGrids(): Promise<ProjectColorGrids> {
   const results = await Promise.allSettled(projectPlacements.map(async (project) => [
     project.id,
     project.source
-      ? await extractImageColorGrid(project.source, project.columns, project.rows)
+      ? await extractImageColorGrid(project.source, project.columns, project.rows, { maxSampleDimension: 256 })
       : laTourettePattern,
   ] as const))
 

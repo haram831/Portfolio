@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useContext, useLayoutEffect, useRef, useState } from 'react'
 import type {
   CSSProperties,
   HTMLAttributes,
@@ -21,6 +21,7 @@ import {
   validateKnitPattern,
 } from '../pattern'
 import { KnitStitchUnit } from './KnitStitchUnit'
+import { ScrollRevealContext } from './scrollReveal'
 import '../styles/knit-ui.css'
 
 export type KnitPatternDensity = 'compact' | 'regular' | 'loose'
@@ -89,6 +90,13 @@ export function KnitPattern({
   style,
   ...props
 }: KnitPatternProps) {
+  const rootRef = useRef<HTMLDivElement>(null)
+  const scrollReveal = useContext(ScrollRevealContext)
+  // Re-register only after a React render (data/interaction changes), never on scroll.
+  // This also restores visibility if resolving a mistake replaces its className.
+  useLayoutEffect(() => {
+    if (rootRef.current && scrollReveal) return scrollReveal.register(rootRef.current)
+  })
   const [resolvedMistakeCells, setResolvedMistakeCells] = useState<Set<string>>(
     () => new Set(),
   )
@@ -144,6 +152,7 @@ export function KnitPattern({
       aria-hidden={ariaLabel || hasInteractiveStitches ? undefined : true}
       className={classes}
       data-row-count={pattern.rows.length}
+      ref={rootRef}
       data-valid={validation.valid ? 'true' : 'false'}
       role={ariaLabel && !hasInteractiveStitches ? 'img' : undefined}
       style={patternStyle}
@@ -209,6 +218,7 @@ export function KnitPattern({
                         : undefined
                   }
                   className={stitchClassName}
+                  data-knit-reveal-index={getStitchRevealIndex(pattern, reveal, rowIndex, columnIndex)}
                   color={getPatternStitchColor(pattern, stitch)}
                   key={`${rowIndex}-${stitchIndex}`}
                   kind={renderedKind}
@@ -401,21 +411,28 @@ function getRevealClasses(
     return className
   }
 
-  const revealIndex = getRevealIndex(
-    pattern,
-    rowIndex,
-    columnIndex,
-    reveal.direction ?? 'top-to-bottom',
-    reveal.order ?? 'left-to-right',
-    reveal.rowOffset ?? 0,
-    reveal.stitchOffset ?? 0,
-  )
+  const revealIndex = getStitchRevealIndex(pattern, reveal, rowIndex, columnIndex)!
   const revealClass =
     revealIndex < reveal.visibleStitchCount
       ? 'knit-pattern-view__reveal-stitch--visible'
       : 'knit-pattern-view__reveal-stitch--hidden'
 
   return `${className} knit-pattern-view__reveal-stitch ${revealClass}`
+}
+
+function getStitchRevealIndex(
+  pattern: KnitPatternData,
+  reveal: KnitPatternRevealOptions | undefined,
+  rowIndex: number,
+  columnIndex: number,
+): number | undefined {
+  return reveal ? getRevealIndex(
+    pattern, rowIndex, columnIndex,
+    reveal.direction ?? 'top-to-bottom',
+    reveal.order ?? 'left-to-right',
+    reveal.rowOffset ?? 0,
+    reveal.stitchOffset ?? 0,
+  ) : undefined
 }
 
 function getRevealIndex(
@@ -688,6 +705,7 @@ function KnitCableOverlay({
                   : undefined
             }
             className={stitchClassName}
+            data-knit-reveal-index={getStitchRevealIndex(pattern, reveal, rowIndex, revealColumnIndex)}
             color={getCableSegmentColor(pattern, cable, segment)}
             key={`${segment.strand}-${segment.laneIndex}-${segment.rowIndex}`}
             kind={renderedKind}

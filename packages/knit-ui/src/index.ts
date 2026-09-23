@@ -44,6 +44,7 @@ export type {
   KnitRow,
   KnitStitch,
   ImageColorGridSource,
+  ImageColorGridOptions,
   StitchKind,
   ValidateKnitPatternOptions,
 } from './pattern'

@@ -9,6 +9,26 @@ afterEach(() => {
 })
 
 describe('extractImageColorGrid', () => {
+  it('bounds image sampling for previews while preserving the requested grid', async () => {
+    const image = makeImage(4000, 2000)
+    const drawImage = vi.fn()
+    const getImageData = vi.fn(() => ({ data: new Uint8ClampedArray(4 * 2 * 4) }))
+    HTMLCanvasElement.prototype.getContext = vi.fn(() => ({ drawImage, getImageData })) as unknown as typeof HTMLCanvasElement.prototype.getContext
+
+    const grid = await extractImageColorGrid(image, 2, 2, { maxSampleDimension: 4 })
+    expect(drawImage).toHaveBeenCalledWith(image, 0, 0, 4, 2)
+    expect(getImageData).toHaveBeenCalledWith(0, 0, 4, 2)
+    expect(grid).toHaveLength(2)
+    expect(grid[0]).toHaveLength(2)
+  })
+
+  it('rejects invalid preview sampling limits', async () => {
+    for (const maximum of [0, -1, 1.5, Number.POSITIVE_INFINITY]) {
+      await expect(extractImageColorGrid(makeImage(1, 1), 1, 1, { maxSampleDimension: maximum }))
+        .rejects.toThrow('maxSampleDimension must be a positive integer.')
+    }
+  })
+
   it('returns a row-major grid of average colors', async () => {
     mockCanvasPixels(4, 2, [
       255, 0, 0, 255,

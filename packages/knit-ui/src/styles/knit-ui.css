@@ -1,3 +1,16 @@
+/* Per-frame values must not invalidate inherited styles on every stitch. */
+@property --knit-scroll-progress {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --knit-scroll-fabric-y {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
 .knit-pattern-view {
   --knit-pattern-gap: 4px;
   --knit-pattern-row-gap: var(--knit-pattern-gap);
@@ -37,18 +50,15 @@
 }
 
 .knit-pattern-view__reveal-stitch {
-  transition:
-    opacity 180ms ease,
-    filter 180ms ease;
+  transition: opacity 120ms ease-out;
 }
 
 .knit-pattern-view__reveal-stitch--hidden {
-  filter: blur(2px);
   opacity: 0;
+  pointer-events: none;
 }
 
 .knit-pattern-view__reveal-stitch--visible {
-  filter: blur(0);
   opacity: 1;
 }
 
@@ -110,9 +120,14 @@
   outline: none;
 }
 
-.knit-stitch-unit:hover,
 .knit-stitch-unit:focus-visible {
   --knit-stitch-hover-scale: 1.2;
+}
+
+@media (hover: hover) {
+  .knit-stitch-unit:hover {
+    --knit-stitch-hover-scale: 1.2;
+  }
 }
 
 .knit-stitch-unit--resolvable-mistake {
@@ -186,7 +201,7 @@
   --knit-scroll-progress: 0;
 
   background: var(--knit-scroll-background);
-  min-height: 100vh;
+  min-height: 100svh;
   position: relative;
 }
 
@@ -203,7 +218,7 @@
   box-sizing: border-box;
   display: flex;
   justify-content: flex-start;
-  min-height: 100vh;
+  min-height: 100svh;
   overflow: hidden;
   padding: calc(var(--knit-scroll-needle-thickness) * 4) 24px 48px;
   position: sticky;
@@ -215,7 +230,8 @@
   justify-content: center;
   margin: 0 auto;
   padding-top: calc(var(--knit-scroll-needle-thickness) * 3.25);
-  transform: translateY(var(--knit-scroll-fabric-y));
+  transform: translate3d(0, var(--knit-scroll-fabric-y), 0);
+  will-change: transform;
   width: 100%;
 }
 
@@ -230,6 +246,7 @@
 }
 
 .knit-scroll-pattern__needle {
+  will-change: transform;
   background: linear-gradient(
     90deg,
     var(--knit-scroll-needle-color),

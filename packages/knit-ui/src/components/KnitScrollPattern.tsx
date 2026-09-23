@@ -2,8 +2,8 @@ import {
   Children,
   cloneElement,
   useEffect,
+  useMemo,
   useRef,
-  useState,
 } from 'react'
 import type {
   CSSProperties,
@@ -18,6 +18,7 @@ import {
   type KnitPatternRevealOrder,
 } from './KnitPattern'
 import type { KnitPatternGroupDirection } from './KnitPatternGroup'
+import { createScrollRevealController, ScrollRevealContext } from './scrollReveal'
 import '../styles/knit-ui.css'
 
 export type KnitScrollStitchOrder = KnitPatternRevealOrder
@@ -52,45 +53,31 @@ export function KnitScrollPattern({
   const rootRef = useRef<HTMLDivElement>(null)
   const fabricScrollSpeed = normalizeFabricScrollSpeed(fabricSpeed)
   const needleMotionSpeed = normalizeNeedleMotionSpeed(needle?.speed)
-  const { progress, scrollTop, needleMotionProgress } = useKnitScrollState(
+  const needleAngle = needle?.angle ?? 13.63
+  const revealController = useMemo(() => createScrollRevealController(), [])
+  const totalFabricHeight = useMemo(() => getScrollableFabricHeight(children), [children])
+  useKnitScrollMotion(
     rootRef,
-    needleMotionSpeed,
-  )
-  const totalFabricHeight = getScrollableFabricHeight(children)
-  const fabricRevealOffset = getFabricRevealOffset(
-    totalFabricHeight,
-    scrollTop,
-    fabricScrollSpeed,
-  )
-  const visibleStitchCount = getVisibleStitchCountAtOffset(
     children,
-    fabricRevealOffset,
+    totalFabricHeight,
+    fabricScrollSpeed,
+    needleMotionSpeed,
+    needleAngle,
+    revealController,
   )
-  const hiddenFabricOffset = totalFabricHeight - fabricRevealOffset
   const revealScrollLength =
     fabricScrollSpeed > 0 ? totalFabricHeight / fabricScrollSpeed : 0
   const scrollLengthCss = getScrollLengthCss(
     revealScrollLength,
     scrollLength,
   )
-  const revealedChildren = revealScrollPatterns(
-    children,
-    visibleStitchCount,
-    stitchOrder,
+  const revealedChildren = useMemo(
+    () => revealScrollPatterns(children, 0, stitchOrder),
+    [children, stitchOrder],
   )
-  const needlePierceProgress = Math.sin(needleMotionProgress * Math.PI)
-  const needleLiftProgress = Math.sin(needleMotionProgress * Math.PI * 2)
-  const needleAngle = needle?.angle ?? 13.63
   const classes = ['knit-scroll-pattern', className].filter(Boolean).join(' ')
   const scrollStyle = {
     ...style,
-    '--knit-scroll-progress': progress,
-    '--knit-scroll-needle-left-angle': `${(needleAngle + needleLiftProgress * 3) * -1}deg`,
-    '--knit-scroll-needle-left-x': `${needlePierceProgress * -12}px`,
-    '--knit-scroll-needle-left-y': `${needleLiftProgress * -7}px`,
-    '--knit-scroll-needle-right-angle': `${needleAngle + needlePierceProgress * -7}deg`,
-    '--knit-scroll-needle-right-x': `${needlePierceProgress * -34}px`,
-    '--knit-scroll-needle-right-y': `${needleLiftProgress * 12}px`,
     '--knit-scroll-length': scrollLengthCss,
     '--knit-scroll-reveal-length': `${revealScrollLength}px`,
     '--knit-scroll-needle-angle': `${needleAngle}deg`,
@@ -99,14 +86,20 @@ export function KnitScrollPattern({
     '--knit-scroll-needle-thickness': needle?.thickness
       ? toCssSize(needle.thickness)
       : undefined,
-    '--knit-scroll-fabric-y': `${hiddenFabricOffset * -1}px`,
   } as CSSProperties
 
   return (
     <div className={classes} ref={rootRef} style={scrollStyle} {...props}>
       <div className="knit-scroll-pattern__stage">
         {needle?.visible ? <KnitScrollNeedles /> : null}
-        <div className="knit-scroll-pattern__fabric">{revealedChildren}</div>
+        <div
+          className="knit-scroll-pattern__fabric"
+          style={{ '--knit-scroll-fabric-y': `${-totalFabricHeight}px` } as CSSProperties}
+        >
+          <ScrollRevealContext.Provider value={revealController}>
+            {revealedChildren}
+          </ScrollRevealContext.Provider>
+        </div>
       </div>
       <div aria-hidden="true" className="knit-scroll-pattern__spacer" />
     </div>
@@ -122,24 +115,18 @@ function KnitScrollNeedles() {
   )
 }
 
-interface KnitScrollState {
-  progress: number
-  scrollTop: number
-  needleMotionProgress: number
-}
-
 const NEEDLE_SCROLL_PIXELS_PER_LOOP = 420
 const DEFAULT_FABRIC_SCROLL_SPEED = 0.2
 
-function useKnitScrollState(
+function useKnitScrollMotion(
   rootRef: RefObject<HTMLDivElement | null>,
+  children: ReactNode,
+  totalFabricHeight: number,
+  fabricScrollSpeed: number,
   needleMotionSpeed: number,
+  needleAngle: number,
+  revealController: ReturnType<typeof createScrollRevealController>,
 ) {
-  const [scrollState, setScrollState] = useState<KnitScrollState>({
-    needleMotionProgress: 0,
-    progress: 0,
-    scrollTop: 0,
-  })
   const previousScrollTopRef = useRef<number | undefined>(undefined)
   const needleMotionOffsetRef = useRef(0)
 
@@ -149,19 +136,8 @@ function useKnitScrollState(
     )
     let frame = 0
 
-    if (prefersReducedMotion.matches) {
-      frame = window.requestAnimationFrame(() =>
-        setScrollState({
-          needleMotionProgress: 0,
-          progress: 1,
-          scrollTop: Number.POSITIVE_INFINITY,
-        }),
-      )
-
-      return () => window.cancelAnimationFrame(frame)
-    }
-
     const updateProgress = () => {
+      frame = 0
       const root = rootRef.current
 
       if (!root) {
@@ -181,15 +157,34 @@ function useKnitScrollState(
 
       previousScrollTopRef.current = scrollTop
 
-      setScrollState({
-        needleMotionProgress: getLoopProgress(needleMotionOffsetRef.current),
-        progress: scrollTop / scrollDistance,
-        scrollTop,
-      })
+      const reduced = prefersReducedMotion.matches
+      const revealOffset = getFabricRevealOffset(
+        totalFabricHeight,
+        reduced ? Number.POSITIVE_INFINITY : scrollTop,
+        fabricScrollSpeed,
+      )
+      const fabric = root.querySelector<HTMLElement>('.knit-scroll-pattern__fabric')
+      const needles = root.querySelector<HTMLElement>('.knit-scroll-pattern__needles')
+      setCssProperty(root, '--knit-scroll-progress', String(reduced ? 1 : scrollTop / scrollDistance))
+      if (fabric) {
+        setCssProperty(fabric, '--knit-scroll-fabric-y', `${revealOffset - totalFabricHeight}px`)
+      }
+      if (needles) {
+        const motion = reduced ? 0 : getLoopProgress(needleMotionOffsetRef.current)
+        const pierce = Math.sin(motion * Math.PI)
+        const lift = Math.sin(motion * Math.PI * 2)
+        // Scope needle variables to their small subtree, not every stitch.
+        setCssProperty(needles, '--knit-scroll-needle-left-angle', `${-(needleAngle + lift * 3)}deg`)
+        setCssProperty(needles, '--knit-scroll-needle-left-x', `${pierce * -12}px`)
+        setCssProperty(needles, '--knit-scroll-needle-left-y', `${lift * -7}px`)
+        setCssProperty(needles, '--knit-scroll-needle-right-angle', `${needleAngle - pierce * 7}deg`)
+        setCssProperty(needles, '--knit-scroll-needle-right-x', `${pierce * -34}px`)
+        setCssProperty(needles, '--knit-scroll-needle-right-y', `${lift * 12}px`)
+      }
+      revealController.update(getVisibleStitchCountAtOffset(children, revealOffset))
     }
     const requestUpdate = () => {
-      window.cancelAnimationFrame(frame)
-      frame = window.requestAnimationFrame(updateProgress)
+      if (frame === 0) frame = window.requestAnimationFrame(updateProgress)
     }
 
     requestUpdate()
@@ -204,16 +199,20 @@ function useKnitScrollState(
 
     window.addEventListener('resize', requestUpdate)
     window.addEventListener('scroll', requestUpdate, { passive: true })
+    prefersReducedMotion.addEventListener('change', requestUpdate)
 
     return () => {
       window.cancelAnimationFrame(frame)
       resizeObserver?.disconnect()
       window.removeEventListener('resize', requestUpdate)
       window.removeEventListener('scroll', requestUpdate)
+      prefersReducedMotion.removeEventListener('change', requestUpdate)
     }
-  }, [needleMotionSpeed, rootRef])
+  }, [children, fabricScrollSpeed, needleAngle, needleMotionSpeed, revealController, rootRef, totalFabricHeight])
+}
 
-  return scrollState
+function setCssProperty(element: HTMLElement, property: string, value: string) {
+  if (element.style.getPropertyValue(property) !== value) element.style.setProperty(property, value)
 }
 
 function toCssSize(value: number | string): string {

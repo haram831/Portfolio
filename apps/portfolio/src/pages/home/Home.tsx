@@ -15,7 +15,6 @@ interface HomeProps {
 
 function Home({ onNavigateToTest, onNavigateToExperience }: HomeProps) {
   const scrollIndicatorRef = useRef<HTMLDivElement>(null)
-  const [scrollIndicatorOpacity, setScrollIndicatorOpacity] = useState(1)
   const [stitchSize, setStitchSize] = useState(getHomeStitchSize)
   const [projectPattern, setProjectPattern] = useState(createProjectPattern)
   const pattern = useMemo(() => connectHomeProjectPattern(projectPattern), [projectPattern])
@@ -43,6 +42,7 @@ function Home({ onNavigateToTest, onNavigateToExperience }: HomeProps) {
 
   useEffect(() => {
     let frame = 0
+    let indicatorTop = 0
 
     const updateScrollIndicatorOpacity = () => {
       frame = 0
@@ -53,11 +53,9 @@ function Home({ onNavigateToTest, onNavigateToExperience }: HomeProps) {
       }
 
       const fadeDistance = Math.max(1, window.innerHeight * 0.5)
-      const scrollIndicatorRect = scrollIndicator.getBoundingClientRect()
-      const progress = clampNumber(scrollIndicatorRect.top / fadeDistance, 0, 1)
-
-      setScrollIndicatorOpacity(progress ** 2)
-      setStitchSize(getHomeStitchSize())
+      const progress = clampNumber((indicatorTop - window.scrollY) / fadeDistance, 0, 1)
+      const opacity = String(progress ** 2)
+      if (scrollIndicator.style.opacity !== opacity) scrollIndicator.style.opacity = opacity
     }
 
     const requestScrollIndicatorUpdate = () => {
@@ -66,16 +64,22 @@ function Home({ onNavigateToTest, onNavigateToExperience }: HomeProps) {
       }
     }
 
-    requestScrollIndicatorUpdate()
+    const resize = () => {
+      indicatorTop = (scrollIndicatorRef.current?.getBoundingClientRect().top ?? 0) + window.scrollY
+      setStitchSize(getHomeStitchSize())
+      requestScrollIndicatorUpdate()
+    }
+
+    resize()
     window.addEventListener('scroll', requestScrollIndicatorUpdate, {
       passive: true,
     })
-    window.addEventListener('resize', requestScrollIndicatorUpdate)
+    window.addEventListener('resize', resize)
 
     return () => {
       window.cancelAnimationFrame(frame)
       window.removeEventListener('scroll', requestScrollIndicatorUpdate)
-      window.removeEventListener('resize', requestScrollIndicatorUpdate)
+      window.removeEventListener('resize', resize)
     }
   }, [])
 
@@ -120,7 +124,6 @@ function Home({ onNavigateToTest, onNavigateToExperience }: HomeProps) {
       <div
         className="home-scroll-indicator"
         ref={scrollIndicatorRef}
-        style={{ opacity: scrollIndicatorOpacity }}
       >
         Scroll down
       </div>

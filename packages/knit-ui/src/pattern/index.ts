@@ -1,6 +1,6 @@
 export { defaultKnitPalette } from './palette'
 export { extractImageColorGrid } from './image'
-export type { ImageColorGridSource } from './image'
+export type { ImageColorGridOptions, ImageColorGridSource } from './image'
 export type {
   AccidentKind,
   CableCross,

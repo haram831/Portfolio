@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { KnitPattern } from './KnitPattern'
 import { KnitScrollPattern } from './KnitScrollPattern'
 import type { KnitPatternData } from '../pattern'
+import { Profiler } from 'react'
+import { KnitPatternGroup } from './KnitPatternGroup'
 
 afterEach(() => {
   cleanup()
@@ -30,6 +32,25 @@ describe('KnitScrollPattern needle motion', () => {
 })
 
 describe('KnitScrollPattern fabric motion', () => {
+  it('preserves bottom-up group order and the space between patterns', async () => {
+    render(
+      <KnitScrollPattern aria-label="scroll pattern" fabricSpeed={1}>
+        <KnitPatternGroup gap={10}>
+          <KnitPattern aria-label="upper" pattern={makeScrollPattern(2)} stitchSize={50} stitchOverlap={0} gap={0} />
+          <KnitPattern aria-label="lower" pattern={makeScrollPattern(2)} stitchSize={50} stitchOverlap={0} gap={0} />
+        </KnitPatternGroup>
+      </KnitScrollPattern>,
+    )
+    const root = screen.getByLabelText('scroll pattern')
+    for (const [scrollTop, upperCount] of [[100, 0], [105, 0], [135, 1], [210, 4], [105, 0]]) {
+      setScrollMetrics(root, { scrollableHeight: 2000, scrollTop })
+      fireEvent.scroll(window)
+      await nextAnimationFrame()
+      expect(screen.getByLabelText('lower').querySelectorAll('.knit-pattern-view__reveal-stitch--visible')).toHaveLength(4)
+      expect(screen.getByLabelText('upper').querySelectorAll('.knit-pattern-view__reveal-stitch--visible')).toHaveLength(upperCount!)
+    }
+  })
+
   it('sizes the automatic scroll area to the fabric reveal distance', () => {
     render(
       <KnitScrollPattern
@@ -102,21 +123,65 @@ describe('KnitScrollPattern fabric motion', () => {
     for (const offset of [1000, 2274, 1600, 1000]) {
       await scrollTo(offset)
       expect(visibleCount()).toBe(80)
-      expect(scrollRoot.style.getPropertyValue('--knit-scroll-fabric-y')).toBe(
+      expect(getFabricStyle(scrollRoot).getPropertyValue('--knit-scroll-fabric-y')).toBe(
         '0px',
       )
     }
 
     await scrollTo(950)
     expect(visibleCount()).toBe(76)
-    expect(scrollRoot.style.getPropertyValue('--knit-scroll-fabric-y')).toBe(
+    expect(getFabricStyle(scrollRoot).getPropertyValue('--knit-scroll-fabric-y')).toBe(
       '-100px',
     )
 
     await scrollTo(0)
     expect(visibleCount()).toBe(0)
   })
+
+  it('reveals and unravels stitches without committing React renders on scroll', async () => {
+    const onRender = vi.fn()
+    render(
+      <Profiler id="scroll" onRender={onRender}>
+        <KnitScrollPattern aria-label="scroll pattern" fabricSpeed={1}>
+          <KnitPattern pattern={makeScrollPattern(40)} />
+        </KnitScrollPattern>
+      </Profiler>,
+    )
+    const root = screen.getByLabelText('scroll pattern')
+    setScrollMetrics(root, { scrollableHeight: 5000, scrollTop: 0 })
+    await nextAnimationFrame()
+    onRender.mockClear()
+
+    for (const scrollTop of [100, 200, 400, 200, 0]) {
+      setScrollMetrics(root, { scrollableHeight: 5000, scrollTop })
+      fireEvent.scroll(window)
+      await nextAnimationFrame()
+      const count = root.querySelectorAll('.knit-pattern-view__reveal-stitch--visible').length
+      expect(count).toBe(scrollTop === 0 ? 0 : Math.ceil(scrollTop / 46 * 2))
+    }
+    expect(onRender).not.toHaveBeenCalled()
+  })
+
+  it('keeps scroll visibility when resolving a mistake rerenders its pattern', async () => {
+    render(
+      <KnitScrollPattern aria-label="scroll pattern" fabricSpeed={1}>
+        <KnitPattern pattern={makeScrollPattern(4)} mistakeFrequency={1} />
+      </KnitScrollPattern>,
+    )
+    const root = screen.getByLabelText('scroll pattern')
+    setScrollMetrics(root, { scrollableHeight: 2000, scrollTop: 100 })
+    await nextAnimationFrame()
+    const visible = root.querySelectorAll('.knit-pattern-view__reveal-stitch--visible')
+    fireEvent.click(visible[0]!)
+    expect(root.querySelectorAll('.knit-pattern-view__reveal-stitch--visible')).toHaveLength(visible.length)
+    expect(root.querySelectorAll('.knit-stitch-unit--resolved-mistake')).toHaveLength(1)
+    expect(root.querySelector('.knit-pattern-view__reveal-stitch--hidden[role="button"]')).toHaveAttribute('tabindex', '-1')
+  })
 })
+
+function getFabricStyle(root: HTMLElement) {
+  return root.querySelector<HTMLElement>('.knit-scroll-pattern__fabric')!.style
+}
 
 interface ScrollMetrics {
   pattern?: KnitPatternData
@@ -142,7 +207,7 @@ async function getScrollStateAfterDistance(metrics: ScrollMetrics) {
   })
   await nextAnimationFrame()
   const initialFabricY = getPixelValue(
-    scrollRoot.style.getPropertyValue('--knit-scroll-fabric-y'),
+    getFabricStyle(scrollRoot).getPropertyValue('--knit-scroll-fabric-y'),
   )
 
   setScrollMetrics(scrollRoot, metrics)
@@ -150,16 +215,16 @@ async function getScrollStateAfterDistance(metrics: ScrollMetrics) {
   await nextAnimationFrame()
 
   const state = {
-    needleLeftX: scrollRoot.style.getPropertyValue(
+    needleLeftX: scrollRoot.querySelector<HTMLElement>('.knit-scroll-pattern__needles')!.style.getPropertyValue(
       '--knit-scroll-needle-left-x',
     ),
-    needleLeftY: scrollRoot.style.getPropertyValue(
+    needleLeftY: scrollRoot.querySelector<HTMLElement>('.knit-scroll-pattern__needles')!.style.getPropertyValue(
       '--knit-scroll-needle-left-y',
     ),
     progress: scrollRoot.style.getPropertyValue('--knit-scroll-progress'),
   }
   const fabricY = getPixelValue(
-    scrollRoot.style.getPropertyValue('--knit-scroll-fabric-y'),
+    getFabricStyle(scrollRoot).getPropertyValue('--knit-scroll-fabric-y'),
   )
   const visibleStitchCount = scrollRoot.querySelectorAll(
     '.knit-pattern-view__reveal-stitch--visible',

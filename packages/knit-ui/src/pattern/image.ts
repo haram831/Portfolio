@@ -1,5 +1,10 @@
 export type ImageColorGridSource = string | Blob | HTMLImageElement
 
+export interface ImageColorGridOptions {
+  /** Sample a smaller image for interactive previews. Omit to retain full-resolution sampling. */
+  maxSampleDimension?: number
+}
+
 const dominantColorClusterDistance = 32
 
 interface ColorCluster {
@@ -16,8 +21,13 @@ export async function extractImageColorGrid(
   source: ImageColorGridSource,
   columns: number,
   rows: number,
+  options: ImageColorGridOptions = {},
 ): Promise<string[][]> {
   validateGridSize(columns, rows)
+  const maximum = options.maxSampleDimension
+  if (maximum !== undefined && (!Number.isInteger(maximum) || maximum < 1)) {
+    throw new Error('maxSampleDimension must be a positive integer.')
+  }
 
   const image = await loadImage(source)
   const canvas = document.createElement('canvas')
@@ -27,16 +37,20 @@ export async function extractImageColorGrid(
     throw new Error('Unable to create a Canvas 2D context.')
   }
 
-  const width = image.naturalWidth
-  const height = image.naturalHeight
+  const naturalWidth = image.naturalWidth
+  const naturalHeight = image.naturalHeight
 
-  if (width < 1 || height < 1) {
+  if (naturalWidth < 1 || naturalHeight < 1) {
     throw new Error('Image must have a non-zero natural width and height.')
   }
 
+  const scale = maximum === undefined ? 1 : Math.min(1, maximum / Math.max(naturalWidth, naturalHeight))
+  const width = scale === 1 ? naturalWidth : Math.max(columns, Math.round(naturalWidth * scale))
+  const height = scale === 1 ? naturalHeight : Math.max(rows, Math.round(naturalHeight * scale))
+
   canvas.width = width
   canvas.height = height
-  context.drawImage(image, 0, 0)
+  context.drawImage(image, 0, 0, width, height)
 
   let pixels: ImageData
 
