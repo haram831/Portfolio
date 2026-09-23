@@ -27,6 +27,17 @@ import { KnitPattern, KnitStitchUnit } from '@knit-ui/core'
 회전된 케이블 코의 좌우는 회전 전 SVG 기준입니다.
 CSS로는 `--knit-stitch-left-color`, `--knit-stitch-right-color`를 지정할 수 있습니다.
 
+## 스크롤 구간
+
+`KnitScrollPattern`은 편물 생성 구간 동안 화면 상단에 고정됩니다.
+기본 생성 거리는 `편물 높이 / fabricSpeed`이며, 기본 속도는 `0.2`입니다.
+전체 코가 나타나면 고정이 풀려, 뷰포트보다 긴 편물의 아래쪽까지 스크롤할 수 있습니다.
+위로 스크롤할 때는 완성된 편물이 유지되며, 편물 상단으로 돌아온 뒤 생성 구간에서만 코가 줄어듭니다.
+
+고정 구간 뒤의 spacer가 생성 거리를 확보하므로, 편물이나 소비 앱의 padding 높이에 대한 고정 보정값은 필요하지 않습니다.
+`scrollLength`를 지정하면 최소 생성 거리 이상으로 적용되며, 더 긴 값을 주면 완성 상태로 고정되는 구간이 늘어납니다.
+`prefers-reduced-motion: reduce`에서는 전체 편물을 바로 표시하고 고정·생성 구간 없이 일반 스크롤로 탐색합니다.
+
 ## 전체 개발 계획서
 
   ### 0. 설계 원칙 문서화

@@ -170,6 +170,7 @@
 .knit-scroll-pattern {
   --knit-scroll-background: #1b1b1b;
   --knit-scroll-length: 0px;
+  --knit-scroll-reveal-length: 0px;
   --knit-scroll-needle-angle: 13.63deg;
   --knit-scroll-needle-color: #e2a959;
   --knit-scroll-needle-highlight: #eecea2;
@@ -185,8 +186,16 @@
   --knit-scroll-progress: 0;
 
   background: var(--knit-scroll-background);
-  min-height: calc(100vh + var(--knit-scroll-length));
+  min-height: 100vh;
   position: relative;
+}
+
+/* The stage keeps its full content height, including consumer padding.
+   This extra space holds it at the top until the entire fabric is revealed.
+   Subsequent scrolling browses the completed stage, in either direction. */
+.knit-scroll-pattern__spacer {
+  height: max(var(--knit-scroll-length), var(--knit-scroll-reveal-length));
+  pointer-events: none;
 }
 
 .knit-scroll-pattern__stage {
@@ -273,6 +282,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .knit-scroll-pattern__spacer {
+    height: 0;
+  }
+
+  .knit-scroll-pattern__stage {
+    position: relative;
+  }
+
   .knit-pattern-view__reveal-stitch {
     transition: none;
   }

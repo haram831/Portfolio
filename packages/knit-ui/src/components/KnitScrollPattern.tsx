@@ -34,6 +34,7 @@ export interface KnitScrollNeedleOptions {
 export interface KnitScrollPatternProps extends HTMLAttributes<HTMLDivElement> {
   fabricSpeed?: number
   needle?: KnitScrollNeedleOptions
+  /** Sticky scroll distance; cannot be shorter than the fabric reveal distance. */
   scrollLength?: number | string
   stitchOrder?: KnitScrollStitchOrder
 }
@@ -66,9 +67,10 @@ export function KnitScrollPattern({
     fabricRevealOffset,
   )
   const hiddenFabricOffset = totalFabricHeight - fabricRevealOffset
+  const revealScrollLength =
+    fabricScrollSpeed > 0 ? totalFabricHeight / fabricScrollSpeed : 0
   const scrollLengthCss = getScrollLengthCss(
-    totalFabricHeight,
-    fabricScrollSpeed,
+    revealScrollLength,
     scrollLength,
   )
   const revealedChildren = revealScrollPatterns(
@@ -90,6 +92,7 @@ export function KnitScrollPattern({
     '--knit-scroll-needle-right-x': `${needlePierceProgress * -34}px`,
     '--knit-scroll-needle-right-y': `${needleLiftProgress * 12}px`,
     '--knit-scroll-length': scrollLengthCss,
+    '--knit-scroll-reveal-length': `${revealScrollLength}px`,
     '--knit-scroll-needle-angle': `${needleAngle}deg`,
     '--knit-scroll-needle-color': needle?.color,
     '--knit-scroll-needle-highlight': needle?.highlightColor,
@@ -105,6 +108,7 @@ export function KnitScrollPattern({
         {needle?.visible ? <KnitScrollNeedles /> : null}
         <div className="knit-scroll-pattern__fabric">{revealedChildren}</div>
       </div>
+      <div aria-hidden="true" className="knit-scroll-pattern__spacer" />
     </div>
   )
 }
@@ -189,11 +193,21 @@ function useKnitScrollState(
     }
 
     requestUpdate()
+    const resizeObserver =
+      typeof ResizeObserver === 'undefined'
+        ? undefined
+        : new ResizeObserver(requestUpdate)
+
+    if (rootRef.current) {
+      resizeObserver?.observe(rootRef.current)
+    }
+
     window.addEventListener('resize', requestUpdate)
     window.addEventListener('scroll', requestUpdate, { passive: true })
 
     return () => {
       window.cancelAnimationFrame(frame)
+      resizeObserver?.disconnect()
       window.removeEventListener('resize', requestUpdate)
       window.removeEventListener('scroll', requestUpdate)
     }
@@ -279,20 +293,14 @@ function getFabricRevealOffset(
 }
 
 function getScrollLengthCss(
-  totalFabricHeight: number,
-  fabricSpeed: number,
+  revealScrollLength: number,
   scrollLength: number | string | undefined,
 ): string {
   if (scrollLength !== undefined && scrollLength !== 'auto') {
     return toCssSize(scrollLength)
   }
 
-  if (fabricSpeed <= 0) {
-    return '0px'
-  }
-
-  return `${totalFabricHeight / fabricSpeed + totalFabricHeight*fabricSpeed + 660}px`
-  // 660px 대신 편물의 padding을 더하는 방식으로 수정해야함
+  return `${revealScrollLength}px`
 }
 
 function getVisibleStitchCountAtOffset(

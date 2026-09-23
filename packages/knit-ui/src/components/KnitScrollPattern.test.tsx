@@ -71,6 +71,51 @@ describe('KnitScrollPattern fabric motion', () => {
       longPatternScroll.visibleStitchCount,
     )
   })
+
+  it('keeps the completed fabric intact until upward scrolling reaches the reveal interval', async () => {
+    render(
+      <KnitScrollPattern aria-label="scroll pattern" fabricSpeed={2}>
+        <KnitPattern
+          gap={0}
+          pattern={makeScrollPattern(40)}
+          stitchOverlap={0}
+          stitchSize={50}
+        />
+      </KnitScrollPattern>,
+    )
+    const scrollRoot = screen.getByLabelText('scroll pattern')
+    // 2000px fabric + 274px padding + 1000px knitting distance.
+    // With a 1000px viewport, browsing occupies scroll offsets 1000–2274.
+    const scrollTo = async (scrollTop: number) => {
+      setScrollMetrics(scrollRoot, { scrollableHeight: 3274, scrollTop })
+      fireEvent.scroll(window)
+      await nextAnimationFrame()
+    }
+    const visibleCount = () =>
+      scrollRoot.querySelectorAll(
+        '.knit-pattern-view__reveal-stitch--visible',
+      ).length
+
+    await scrollTo(0)
+    expect(visibleCount()).toBe(0)
+
+    for (const offset of [1000, 2274, 1600, 1000]) {
+      await scrollTo(offset)
+      expect(visibleCount()).toBe(80)
+      expect(scrollRoot.style.getPropertyValue('--knit-scroll-fabric-y')).toBe(
+        '0px',
+      )
+    }
+
+    await scrollTo(950)
+    expect(visibleCount()).toBe(76)
+    expect(scrollRoot.style.getPropertyValue('--knit-scroll-fabric-y')).toBe(
+      '-100px',
+    )
+
+    await scrollTo(0)
+    expect(visibleCount()).toBe(0)
+  })
 })
 
 interface ScrollMetrics {
@@ -81,7 +126,11 @@ interface ScrollMetrics {
 
 async function getScrollStateAfterDistance(metrics: ScrollMetrics) {
   const { unmount } = render(
-    <KnitScrollPattern aria-label="scroll pattern" needle={{ visible: true }}>
+    <KnitScrollPattern
+      aria-label="scroll pattern"
+      fabricSpeed={1}
+      needle={{ visible: true }}
+    >
       <KnitPattern pattern={metrics.pattern ?? scrollPattern} />
     </KnitScrollPattern>,
   )
