@@ -37,6 +37,27 @@ function submit() {
 }
 
 describe('Experience', () => {
+  it('fits wide patterns inside the capped container on large screens', async () => {
+    const originalWidth = window.innerWidth
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1920 })
+    vi.mocked(createImagePattern).mockResolvedValue({
+      castOn: 80,
+      rows: [{ stitches: Array.from({ length: 80 }, () => ({ kind: 'knit', color: '#ffffff' })) }],
+    })
+    try {
+      render(<Experience />)
+      fireEvent.change(screen.getByLabelText('패턴으로 만들 이미지 파일'), {
+        target: { files: [new File(['image'], 'wide.png', { type: 'image/png' })] },
+      })
+      await finishGeneration()
+      const fabric = screen.getByRole('img', { name: '생성된 패턴: 80코, 1단' })
+      const size = parseFloat(fabric.style.getPropertyValue('--knit-pattern-stitch-size'))
+      expect(size * 80.34).toBeLessThanOrEqual(1440 - 48)
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth })
+    }
+  })
+
   it('moves from instructions through loading to scroll reveal and saves before scrolling', async () => {
     render(<Experience />)
     const save = screen.getByRole('button', { name: '패턴 이미지 저장' })

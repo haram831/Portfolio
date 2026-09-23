@@ -3,6 +3,11 @@ import { validateKnitPattern } from '@knit-ui/core'
 import { colorGridToPattern, createImagePattern, createTextPattern, getPatternDimensions, MAX_COLUMNS, MAX_FILE_BYTES, MAX_ROWS, textCharacters } from './experiencePattern'
 
 describe('experience pattern inputs', () => {
+  it('uses one stitch per ten image pixels, with denser sampling for text', () => {
+    expect(getPatternDimensions(600, 400)).toEqual({ columns: 60, rows: 40 })
+    expect(getPatternDimensions(200, 100, 4)).toEqual({ columns: 50, rows: 25 })
+  })
+
   it.each([[4000, 3000], [3000, 4000], [1, 10000], [10000, 1], [16, 16]])(
     'bounds a %s × %s image without stretching ordinary aspect ratios', (width, height) => {
       const { columns, rows } = getPatternDimensions(width, height)

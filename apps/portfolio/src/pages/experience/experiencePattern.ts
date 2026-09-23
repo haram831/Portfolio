@@ -2,7 +2,7 @@ import { extractImageColorGrid } from '@knit-ui/core'
 import type { KnitPatternData } from '@knit-ui/core'
 
 export const MAX_TEXT_LENGTH = 50
-export const MAX_COLUMNS = 80
+export const MAX_COLUMNS = 70
 export const MAX_ROWS = 100
 export const MAX_FILE_BYTES = 10 * 1024 * 1024
 
@@ -12,13 +12,13 @@ export function textCharacters(text: string): string[] {
   return Array.from(segmenter.segment(text), ({ segment }) => segment)
 }
 
-export function getPatternDimensions(width: number, height: number) {
+export function getPatternDimensions(width: number, height: number, pixelsPerStitch = 10) {
   if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
     throw new Error('이미지 크기를 확인할 수 없습니다.')
   }
 
-  // Roughly one stitch per four source pixels; never exceed either limit.
-  const scale = Math.min(1 / 4, MAX_COLUMNS / width, MAX_ROWS / height)
+  // Keep the source aspect ratio while bounding both stitch counts.
+  const scale = Math.min(1 / pixelsPerStitch, MAX_COLUMNS / width, MAX_ROWS / height)
   return {
     columns: Math.max(1, Math.round(width * scale)),
     rows: Math.max(1, Math.round(height * scale)),
@@ -90,7 +90,7 @@ export async function createTextPattern(text: string): Promise<KnitPatternData> 
   context.fillStyle = '#ffffff'
   lines.forEach((value, index) => context.fillText(value, canvas.width / 2, 48 + index * 64))
 
-  const { columns, rows } = getPatternDimensions(canvas.width, canvas.height)
+  const { columns, rows } = getPatternDimensions(canvas.width, canvas.height, 4)
   const sample = document.createElement('canvas')
   sample.width = columns
   sample.height = rows

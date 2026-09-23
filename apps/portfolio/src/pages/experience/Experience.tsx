@@ -21,7 +21,8 @@ export function Experience() {
   const savingRef = useRef(false)
   const busy = status === 'making'
   const instruction = busy ? 'making pattern...' : pattern ? 'scroll down' : 'upload your image or text'
-  const stitchSize = Math.min(24, (viewportWidth - 48) / ((pattern?.castOn ?? 1) + 0.34))
+  // Match the scroll container's 1440px limit and reserve room for the edge stitches.
+  const stitchSize = Math.min(24, (Math.min(viewportWidth, 1440) - 48) / ((pattern?.castOn ?? 1) + 0.34))
 
   useEffect(() => {
     let frame = 0
